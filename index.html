@@ -320,4 +320,364 @@
             { name: "Averland Sunset", brand: "Citadel", type: "Base", color: "#fbb81c", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] },
             { name: "Yriel Yellow", brand: "Citadel", type: "Layer", color: "#ffd900", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] },
             { name: "Flash Gitz Yellow", brand: "Citadel", type: "Layer", color: "#fff200", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] },
-            { name: "Bugman's Glow", brand: "Citadel", type: "Base", color: "#8
+            { name: "Bugman's Glow", brand: "Citadel", type: "Base", color: "#804e40", triad: ["Bugman's Glow", "Cadian Fleshtone", "Kislev Flesh"] },
+            { name: "Cadian Fleshtone", brand: "Citadel", type: "Layer", color: "#c58b70", triad: ["Bugman's Glow", "Cadian Fleshtone", "Kislev Flesh"] },
+            { name: "Kislev Flesh", brand: "Citadel", type: "Layer", color: "#d1a581", triad: ["Bugman's Glow", "Cadian Fleshtone", "Kislev Flesh"] },
+            { name: "Abaddon Black", brand: "Citadel", type: "Base", color: "#000000", triad: ["Abaddon Black", "Dark Reaper", "Fenrisian Grey"] },
+            { name: "Mechanicus Standard Grey", brand: "Citadel", type: "Base", color: "#394246", triad: ["Mechanicus Standard Grey", "Dawnstone", "Administratum Grey"] },
+            { name: "White Scar", brand: "Citadel", type: "Layer", color: "#ffffff", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] },
+            { name: "Leadbelcher", brand: "Citadel", type: "Metallic", color: "#87888c", triad: ["Leadbelcher", "Nuln Oil", "Ironbreaker"] },
+            { name: "Retributor Armour", brand: "Citadel", type: "Metallic", color: "#c69941", triad: ["Retributor Armour", "Reikland Fleshshade", "Auric Armour Gold"] },
+            
+            // SHADES
+            { name: "Carroburg Crimson", brand: "Citadel", type: "Shade", color: "#491014", triad: ["Red Wash Target"] },
+            { name: "Drakenhof Nightshade", brand: "Citadel", type: "Shade", color: "#111f33", triad: ["Blue Wash Target"] },
+            { name: "Biel-Tan Green", brand: "Citadel", type: "Shade", color: "#11381e", triad: ["Green Wash Target"] },
+            { name: "Agrax Earthshade", brand: "Citadel", type: "Shade", color: "#221711", triad: ["Brown/Earth Wash Target"] },
+            { name: "Nuln Oil", brand: "Citadel", type: "Shade", color: "#111111", triad: ["Black/Neutral Wash Target"] },
+
+            // --- AK INTERACTIVE ---
+            { name: "Black Purple", brand: "AK", type: "Base", color: "#2b132b", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
+            { name: "Dragon Blood", brand: "AK", type: "Layer 1", color: "#6e1a24", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
+            { name: "Magenta", brand: "AK", type: "Layer 2", color: "#b5215e", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
+            { name: "Cold Green", brand: "AK", type: "Base", color: "#006b54", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
+            { name: "Green Skin Punch", brand: "AK", type: "Layer 1", color: "#118c4f", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
+            { name: "Slime Green", brand: "AK", type: "Layer 2", color: "#7bc352", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] }
+        ];
+
+        const activeWallLayout = {};
+
+        function generateFullWallMapping() {
+            // Column A: Reds (Rows 1-3) -> Grounded with Red Shade at A16
+            activeWallLayout["A1"] = { name: "Mephiston Red", brand: "Citadel", type: "Base", color: "#9a1115", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] };
+            activeWallLayout["A2"] = { name: "Evil Sunz Scarlet", brand: "Citadel", type: "Layer", color: "#c01413", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] };
+            activeWallLayout["A3"] = { name: "Wild Rider Red", brand: "Citadel", type: "Layer", color: "#e82e1b", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] };
+            activeWallLayout["A16"] = { name: "Carroburg Crimson", brand: "Citadel", type: "Shade", color: "#491014", triad: ["Red Wash Target"] };
+            
+            // Column B: Crimson Triad
+            activeWallLayout["B1"] = { name: "Khorne Red", brand: "Citadel", type: "Base", color: "#6a0005", triad: ["Khorne Red", "Wazdakka Red", "Squig Orange"] };
+            activeWallLayout["B2"] = { name: "Wazdakka Red", brand: "Citadel", type: "Layer", color: "#880c1e", triad: ["Khorne Red", "Wazdakka Red", "Squig Orange"] };
+            activeWallLayout["B3"] = { name: "Squig Orange", brand: "Citadel", type: "Layer", color: "#a74d36", triad: ["Khorne Red", "Wazdakka Red", "Squig Orange"] };
+            
+            // Column C: Blues -> Blue Shade at C16
+            activeWallLayout["C1"] = { name: "Macragge Blue", brand: "Citadel", type: "Base", color: "#0d407f", triad: ["Macragge Blue", "Alaitoc Blue", "Hoeth Blue"] };
+            activeWallLayout["C2"] = { name: "Alaitoc Blue", brand: "Citadel", type: "Layer", color: "#254a76", triad: ["Macragge Blue", "Alaitoc Blue", "Hoeth Blue"] };
+            activeWallLayout["C3"] = { name: "Hoeth Blue", brand: "Citadel", type: "Layer", color: "#4c78a4", triad: ["Macragge Blue", "Alaitoc Blue", "Hoeth Blue"] };
+            activeWallLayout["C16"] = { name: "Drakenhof Nightshade", brand: "Citadel", type: "Shade", color: "#111f33", triad: ["Blue Wash Target"] };
+            
+            // Column D: Dark Blue & Skin Triad
+            activeWallLayout["D1"] = { name: "Kantor Blue", brand: "Citadel", type: "Base", color: "#021f46", triad: ["Kantor Blue", "Alaitoc Blue", "Hoeth Blue"] };
+            activeWallLayout["D5"] = { name: "Bugman's Glow", brand: "Citadel", type: "Base", color: "#804e40", triad: ["Bugman's Glow", "Cadian Fleshtone", "Kislev Flesh"] };
+            activeWallLayout["D6"] = { name: "Cadian Fleshtone", brand: "Citadel", type: "Layer", color: "#c58b70", triad: ["Bugman's Glow", "Cadian Fleshtone", "Kislev Flesh"] };
+            activeWallLayout["D7"] = { name: "Kislev Flesh", brand: "Citadel", type: "Layer", color: "#d1a581", triad: ["Bugman's Glow", "Cadian Fleshtone", "Kislev Flesh"] };
+
+            // Column E: Greens -> Green Shade at E16
+            activeWallLayout["E1"] = { name: "Caliban Green", brand: "Citadel", type: "Base", color: "#0a3d21", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] };
+            activeWallLayout["E2"] = { name: "Warpstone Glow", brand: "Citadel", type: "Layer", color: "#137438", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] };
+            activeWallLayout["E3"] = { name: "Moot Green", brand: "Citadel", type: "Layer", color: "#3da224", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] };
+            activeWallLayout["E16"] = { name: "Biel-Tan Green", brand: "Citadel", type: "Shade", color: "#11381e", triad: ["Green Wash Target"] };
+            
+            // Column F: Olive Greens
+            activeWallLayout["F1"] = { name: "Castellan Green", brand: "Citadel", type: "Base", color: "#2b331f", triad: ["Castellan Green", "Loren Forest", "Straken Green"] };
+            activeWallLayout["F2"] = { name: "Loren Forest", brand: "Citadel", type: "Layer", color: "#4a5838", triad: ["Castellan Green", "Loren Forest", "Straken Green"] };
+            activeWallLayout["F3"] = { name: "Straken Green", brand: "Citadel", type: "Layer", color: "#608945", triad: ["Castellan Green", "Loren Forest", "Straken Green"] };
+            
+            // Column G: Purples
+            activeWallLayout["G1"] = { name: "Naggaroth Night", brand: "Citadel", type: "Base", color: "#3b1442", triad: ["Naggaroth Night", "Xereus Purple", "Genestealer Purple"] };
+            activeWallLayout["G2"] = { name: "Xereus Purple", brand: "Citadel", type: "Layer", color: "#47125a", triad: ["Naggaroth Night", "Xereus Purple", "Genestealer Purple"] };
+            activeWallLayout["G3"] = { name: "Genestealer Purple", brand: "Citadel", type: "Layer", color: "#764094", triad: ["Naggaroth Night", "Xereus Purple", "Genestealer Purple"] };
+            
+            // Column H: Yellows -> Earth/Brown Shade at H16
+            activeWallLayout["H1"] = { name: "Averland Sunset", brand: "Citadel", type: "Base", color: "#fbb81c", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] };
+            activeWallLayout["H2"] = { name: "Yriel Yellow", brand: "Citadel", type: "Layer", color: "#ffd900", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] };
+            activeWallLayout["H3"] = { name: "Flash Gitz Yellow", brand: "Citadel", type: "Layer", color: "#fff200", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] };
+            activeWallLayout["H16"] = { name: "Agrax Earthshade", brand: "Citadel", type: "Shade", color: "#221711", triad: ["Brown/Earth Wash Target"] };
+
+            // Column I: Neutrals / Blacks / Grays -> Nuln Oil at I16
+            activeWallLayout["I1"] = { name: "Abaddon Black", brand: "Citadel", type: "Base", color: "#000000", triad: ["Abaddon Black", "Dark Reaper", "Fenrisian Grey"] };
+            activeWallLayout["I2"] = { name: "Mechanicus Standard Grey", brand: "Citadel", type: "Base", color: "#394246", triad: ["Mechanicus Standard Grey", "Dawnstone", "Administratum Grey"] };
+            activeWallLayout["I3"] = { name: "White Scar", brand: "Citadel", type: "Layer", color: "#ffffff", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] };
+            activeWallLayout["I16"] = { name: "Nuln Oil", brand: "Citadel", type: "Shade", color: "#111111", triad: ["Black/Neutral Wash Target"] };
+
+            // Column J: Metallics
+            activeWallLayout["J1"] = { name: "Leadbelcher", brand: "Citadel", type: "Metallic", color: "#87888c", triad: ["Leadbelcher", "Nuln Oil", "Ironbreaker"] };
+            activeWallLayout["J2"] = { name: "Retributor Armour", brand: "Citadel", type: "Metallic", color: "#c69941", triad: ["Retributor Armour", "Reikland Fleshshade", "Auric Armour Gold"] };
+
+            // --- AK INTERACTIVE (Columns O, P, Q) ---
+            activeWallLayout["O1"] = { name: "Black Purple", brand: "AK", type: "Base", color: "#2b132b", triad: ["Black Purple", "Dragon Blood", "Magenta"] };
+            activeWallLayout["O2"] = { name: "Dragon Blood", brand: "AK", type: "Layer 1", color: "#6e1a24", triad: ["Black Purple", "Dragon Blood", "Magenta"] };
+            activeWallLayout["O3"] = { name: "Magenta", brand: "AK", type: "Layer 2", color: "#b5215e", triad: ["Black Purple", "Dragon Blood", "Magenta"] };
+            
+            activeWallLayout["P1"] = { name: "Cold Green", brand: "AK", type: "Base", color: "#006b54", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] };
+            activeWallLayout["P2"] = { name: "Green Skin Punch", brand: "AK", type: "Layer 1", color: "#118c4f", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] };
+            activeWallLayout["P3"] = { name: "Slime Green", brand: "AK", type: "Layer 2", color: "#7bc352", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] };
+        }
+
+        function renderHexGrid() {
+            const canvas = document.getElementById('canvas-grid');
+            canvas.innerHTML = '';
+
+            for (let r = 1; r <= rowsCount; r++) {
+                const rowObj = document.createElement('div');
+                rowObj.className = 'hex-row';
+
+                cols.forEach(colName => {
+                    const coordStr = `${colName}${r}`;
+                    const cell = document.createElement('div');
+                    cell.className = 'hex-cell';
+                    cell.id = `cell-${coordStr}`;
+
+                    // Visually mark row 16 as the special "Shade Zone" line
+                    if (r === 16) {
+                        cell.style.borderBottom = "2px dashed #444452";
+                    }
+
+                    const coordLabel = document.createElement('span');
+                    coordLabel.className = 'hex-coord';
+                    coordLabel.innerText = coordStr;
+                    cell.appendChild(coordLabel);
+
+                    const titleLabel = document.createElement('span');
+                    titleLabel.className = 'hex-title';
+
+                    if (activeWallLayout[coordStr]) {
+                        const activeItem = activeWallLayout[coordStr];
+                        titleLabel.innerText = activeItem.name;
+                        cell.style.backgroundColor = activeItem.color;
+
+                        const bDot = document.createElement('div');
+                        bDot.className = `brand-dot dot-${activeItem.brand === 'Citadel' ? 'citadel' : 'ak'}`;
+                        cell.appendChild(bDot);
+
+                        if(activeItem.color === '#ffffff' || activeItem.color === '#fff200' || activeItem.color === '#ffd900') {
+                            cell.style.color = '#000';
+                            coordLabel.style.color = 'rgba(0,0,0,0.5)';
+                        }
+                        cell.addEventListener('click', (e) => {
+                            if (isDraggingEvent) return;
+                            launchViewPanel(coordStr, activeItem);
+                        });
+                    } else {
+                        titleLabel.innerText = '';
+                        cell.addEventListener('click', (e) => {
+                            if (isDraggingEvent) return;
+                            launchEditPanel(coordStr);
+                        });
+                    }
+
+                    cell.appendChild(titleLabel);
+                    rowObj.appendChild(cell);
+                });
+                canvas.appendChild(rowObj);
+            }
+            evaluateStatistics();
+        }
+
+        // --- PAN AND ZOOM CONFIG ---
+        const viewport = document.getElementById('viewport');
+        const canvas = document.getElementById('canvas-grid');
+
+        let scale = 0.75;
+        let panX = 15;
+        let panY = 15;
+        let isDragging = false;
+        let isDraggingEvent = false;
+        let startX, startY;
+        let initialPinchDist = null;
+        let initialScale = 1;
+
+        function updateTransform() {
+            scale = Math.max(0.3, Math.min(scale, 2.5));
+            canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        }
+
+        viewport.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                isDraggingEvent = false;
+                startX = e.touches[0].clientX - panX;
+                startY = e.touches[0].clientY - panY;
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                initialPinchDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                initialScale = scale;
+            }
+        }, { passive: true });
+
+        viewport.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches.length === 1) {
+                isDraggingEvent = true;
+                panX = e.touches[0].clientX - startX;
+                panY = e.touches[0].clientY - startY;
+                updateTransform();
+            } else if (e.touches.length === 2 && initialPinchDist) {
+                const currentDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                scale = initialScale * (currentDist / initialPinchDist);
+                updateTransform();
+            }
+        }, { passive: true });
+
+        viewport.addEventListener('touchend', (e) => {
+            isDragging = false;
+            initialPinchDist = null;
+            setTimeout(() => { isDraggingEvent = false; }, 50);
+        });
+
+        viewport.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            isDraggingEvent = false;
+            startX = e.clientX - panX;
+            startY = e.clientY - panY;
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            isDraggingEvent = true;
+            panX = e.clientX - startX;
+            panY = e.clientY - startY;
+            updateTransform();
+        });
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            setTimeout(() => { isDraggingEvent = false; }, 50);
+        });
+
+        function launchViewPanel(coord, paint) {
+            document.getElementById('edit-panel').style.display = 'none';
+            const panel = document.getElementById('view-panel');
+            panel.style.display = 'block';
+
+            document.getElementById('view-name').innerText = paint.name + ` (${coord})`;
+            document.getElementById('view-meta').innerText = `${paint.brand} · ${paint.type}`;
+            document.getElementById('view-swatch').style.backgroundColor = paint.color;
+
+            const triadBox = document.getElementById('view-triad');
+            triadBox.innerHTML = '';
+            
+            if(paint.triad && paint.triad.length > 1) {
+                paint.triad.forEach((stepName, index) => {
+                    const segment = document.createElement('span');
+                    segment.className = 'triad-step';
+                    if(stepName.toLowerCase() === paint.name.toLowerCase()) {
+                        segment.className = 'triad-step triad-active';
+                    }
+                    segment.innerText = stepName;
+                    triadBox.appendChild(segment);
+                    if(index < paint.triad.length - 1) {
+                        triadBox.innerHTML += ' <span>↓</span> ';
+                    }
+                });
+            } else {
+                triadBox.innerHTML = `<span class="triad-step">${paint.triad ? paint.triad[0] : 'Special Format'}</span>`;
+            }
+        }
+
+        function launchEditPanel(coord) {
+            document.getElementById('view-panel').style.display = 'none';
+            const panel = document.getElementById('edit-panel');
+            panel.style.display = 'block';
+            
+            selectedCoord = coord;
+            document.getElementById('edit-coords').innerText = `Assign Slot: ${coord}`;
+            document.getElementById('catalogSearch').value = '';
+            selectedPaintFromCatalog = null;
+            updateCatalogDropdown();
+        }
+
+        function closePanels() {
+            document.getElementById('view-panel').style.display = 'none';
+            document.getElementById('edit-panel').style.display = 'none';
+        }
+
+        function filterTab(brand, element) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn');
+            element.className = 'tab-btn tab-active';
+            activeTabBrand = brand;
+            updateCatalogDropdown();
+        }
+
+        function updateCatalogDropdown() {
+            const searchVal = document.getElementById('catalogSearch').value.toLowerCase();
+            const box = document.getElementById('dropdown-box');
+            box.innerHTML = '';
+
+            const filtered = paintCatalog.filter(p => {
+                const matchesBrand = (activeTabBrand === 'All' || p.brand === activeTabBrand);
+                const matchesSearch = p.name.toLowerCase().includes(searchVal);
+                return matchesBrand && matchesSearch;
+            });
+
+            filtered.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'dropdown-item';
+                row.innerHTML = `<span>${p.name}</span><span style="color:var(--text-dim); font-size:0.7rem;">${p.brand}</span>`;
+                row.onclick = () => {
+                    document.getElementById('catalogSearch').value = p.name;
+                    selectedPaintFromCatalog = p;
+                };
+                box.appendChild(row);
+            });
+        }
+
+        function commitAssignment() {
+            if (!selectedPaintFromCatalog || !selectedCoord) return;
+            activeWallLayout[selectedCoord] = { ...selectedPaintFromCatalog };
+            renderHexGrid();
+            document.getElementById('edit-panel').style.display = 'none';
+        }
+
+        function clearAssignment() {
+            if (!selectedCoord) return;
+            delete activeWallLayout[selectedCoord];
+            renderHexGrid();
+            document.getElementById('edit-panel').style.display = 'none';
+        }
+
+        function runGlobalSearch() {
+            const matchStr = document.getElementById('mainSearch').value.toLowerCase();
+            cols.forEach(col => {
+                for(let r = 1; r <= rowsCount; r++) {
+                    const coord = `${col}${r}`;
+                    const targetCell = document.getElementById(`cell-${coord}`);
+                    if (!targetCell) continue;
+                    const activePaint = activeWallLayout[coord];
+
+                    if (matchStr === '') {
+                        targetCell.classList.remove('hex-dimmed');
+                        continue;
+                    }
+                    if (activePaint) {
+                        if (activePaint.name.toLowerCase().includes(matchStr) || 
+                            activePaint.brand.toLowerCase().includes(matchStr) || 
+                            activePaint.type.toLowerCase().includes(matchStr)) {
+                            targetCell.classList.remove('hex-dimmed');
+                        } else {
+                            targetCell.classList.add('hex-dimmed');
+                        }
+                    } else {
+                        targetCell.classList.add('hex-dimmed');
+                    }
+                }
+            });
+        }
+
+        function evaluateStatistics() {
+            const calculatedTotal = Object.keys(activeWallLayout).length;
+            const openCapacity = (20 * 16) - calculatedTotal;
+            document.getElementById('stat-total').innerText = `Paints Placed: ${calculatedTotal}`;
+            document.getElementById('stat-empty').innerText = `Empty Slots: ${openCapacity}`;
+        }
+
+        window.onload = () => {
+            generateFullWallMapping();
+            renderHexGrid();
+            updateTransform();
+        };
+    </script>
+</body>
+</html>
