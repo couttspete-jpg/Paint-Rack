@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Paint Rack Manager</title>
+    <title>Master Hex Paint Rack Manager</title>
     <style>
         :root {
-            --bg-color: #1e1e24;
-            --card-bg: #2a2a35;
+            --bg-color: #121214;
+            --panel-bg: #1a1a22;
             --accent-color: #ff9f1c;
             --text-color: #f4f4f9;
-            --border-color: #3f3f52;
+            --border-color: #2a2a35;
         }
 
         body {
@@ -29,38 +29,41 @@
         h1 {
             text-align: center;
             color: var(--accent-color);
-            margin-bottom: 30px;
+            margin-bottom: 25px;
+            font-weight: 400;
+            letter-spacing: 1px;
         }
 
         /* Info & Triad Panel */
         .panel {
-            background-color: var(--card-bg);
+            background-color: var(--panel-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 20px;
-            margin-bottom: 30px;
-            min-height: 80px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .triad-display {
             display: flex;
             align-items: center;
             gap: 15px;
-            font-size: 1.1rem;
-            margin-top: 10px;
+            font-size: 1rem;
+            margin-top: 12px;
             flex-wrap: wrap;
         }
 
         .triad-step {
-            padding: 8px 16px;
-            background: #353545;
-            border-radius: 4px;
+            padding: 10px 18px;
+            background: #252533;
+            border-radius: 6px;
             border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
         }
 
         .triad-step.selected {
             border-color: var(--accent-color);
-            color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(255, 159, 28, 0.2);
         }
 
         .arrow {
@@ -68,121 +71,142 @@
             color: var(--accent-color);
         }
 
-        /* Grid Layout */
+        /* HORIZONTAL ROWS & HEX GRID LAYOUT */
         .grid-row {
-            margin-bottom: 25px;
+            margin-bottom: 35px;
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
         }
 
         .row-title {
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-            color: #a5a5b5;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 5px;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: #85859c;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
+        /* Hexagonal Grid Stacking Geometry */
         .paint-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-bottom: 10px;
         }
 
-        /* Paint Slots */
+        /* HEXAGON CONTAINER & SHAPE DEFINITION */
+        .slot-wrapper {
+            position: relative;
+            width: 100px;
+            height: 110px;
+            margin-bottom: 5px;
+        }
+
         .slot {
-            background-color: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 6px;
-            padding: 10px;
-            min-height: 95px;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #2e2e3a;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+            box-sizing: border-box;
             cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
+            transition: transform 0.2s ease, filter 0.2s ease;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
         }
 
         .slot:hover {
-            border-color: #55556d;
-            transform: translateY(-2px);
+            transform: scale(1.05);
+            filter: brightness(1.15);
+            z-index: 10;
         }
 
         .slot.active-selection {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 8px rgba(255, 159, 28, 0.3);
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 8px var(--accent-color)) brightness(1.1);
+            z-index: 9;
         }
 
         .slot.empty {
-            border-style: dashed;
             background-color: transparent;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .slot-id {
-            font-size: 0.75rem;
-            color: #75758c;
-            font-weight: bold;
-            position: absolute;
-            top: 5px;
+            background-image: radial-gradient(circle, #252533 60%, transparent 62%);
+            border: 1px dashed #4e4e64;
+            clip-path: none;
+            border-radius: 50%;
+            width: 90px;
+            height: 90px;
+            top: 10px;
             left: 5px;
         }
 
+        .slot-id {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.4);
+            font-weight: bold;
+            position: absolute;
+            top: 14px;
+        }
+
         .paint-name {
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-top: 15px;
+            font-size: 0.75rem;
+            font-weight: bold;
             text-align: center;
             word-wrap: break-word;
+            max-width: 85px;
+            line-height: 1.1;
+            margin-top: 12px;
+            color: #ffffff;
         }
 
         .paint-type {
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             text-align: center;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--accent-color);
+            font-weight: bold;
+            color: rgba(255,255,255,0.6);
             margin-top: 4px;
         }
 
-        .paint-brand {
-            font-size: 0.65rem;
-            color: #85859c;
-            text-align: center;
-        }
-
-        /* Controls */
+        /* Hidden controls overlay inside Hex */
         .actions {
-            margin-top: 8px;
+            position: absolute;
+            bottom: 14px;
             display: flex;
-            justify-content: center;
-            gap: 5px;
+            gap: 3px;
             opacity: 0;
             transition: opacity 0.2s ease;
+            z-index: 15;
         }
 
-        .slot:hover .actions {
+        .slot-wrapper:hover .actions {
             opacity: 1;
         }
 
         .btn {
-            background: #4e4e64;
-            border: none;
+            background: rgba(0,0,0,0.75);
+            border: 1px solid rgba(255,255,255,0.2);
             color: white;
-            padding: 2px 6px;
+            padding: 1px 4px;
             border-radius: 3px;
-            font-size: 0.7rem;
+            font-size: 0.55rem;
             cursor: pointer;
         }
 
         .btn:hover {
             background: var(--accent-color);
+            color: black;
         }
 
         .btn-delete {
-            background: #d90429;
+            background: rgba(217, 4, 41, 0.85);
         }
-
         .btn-delete:hover {
             background: #ef233c;
         }
@@ -191,12 +215,12 @@
 <body>
 
 <div class="container">
-    <h1>Master Paint Workbench & Rack Manager</h1>
+    <h1>Master Hex Workbench Paint Manager</h1>
 
     <div class="panel" id="viewer-panel">
-        <div style="color: #a5a5b5;">Click a paint slot to inspect its Triad chain or dynamically modify the rack.</div>
+        <div style="color: #a5a5b5;">Select an active hex slot to calculate custom Triad chains or dynamically reallocate space.</div>
         <div id="active-info" style="display:none;">
-            <h3 id="info-title" style="margin: 0 0 5px 0;"></h3>
+            <h3 id="info-title" style="margin: 0 0 5px 0; font-weight: 400; color: var(--accent-color);"></h3>
             <div class="triad-display" id="triad-container"></div>
         </div>
     </div>
@@ -205,9 +229,9 @@
 </div>
 
 <script>
-    // Complete database featuring all original slots/Citadel paints, combined with your streamlined AK layout
+    // Complete Un-Anchored Unified Master Dataset (Restored Rows and Trimmed Contrasts/Technicals)
     let rackData = [
-        // Rows A through N (Citadel Collection - Cleaned of Contrasts/Technicals)
+        // Rows A-D (Citadel Classics)
         { slot: "A1", brand: "Citadel", type: "Base", name: "Abaddon Black", family: "Blacks" },
         { slot: "A2", brand: "Citadel", type: "Layer 1", name: "Eshin Grey", family: "Blacks" },
         { slot: "A3", brand: "Citadel", type: "Layer 2", name: "Dawnstone", family: "Blacks" },
@@ -244,10 +268,9 @@
         { slot: "C8", brand: "Citadel", type: "Layer 1", name: "Ironbreaker", family: "Silvers" },
         { slot: "C9", brand: "Citadel", type: "Layer 2", name: "Runefang Steel", family: "Silvers" },
         { slot: "C10", brand: "Citadel", type: "Base", name: "Bugman's Glow", family: "Flesh" },
-        { slot: "C11", brand: "Citadel", type: "Layer 1", name: "Cadian Fleshtone", family: "F引导sh" },
+        { slot: "C11", brand: "Citadel", type: "Layer 1", name: "Cadian Fleshtone", family: "Flesh" },
         { slot: "C12", brand: "Citadel", type: "Layer 2", name: "Kislev Flesh", family: "Flesh" },
 
-        // Add additional placeholder rows between D and N if needed to preserve your exact historic row mappings
         { slot: "D1", brand: "Citadel", type: "Base", name: "Zandri Dust", family: "Tans" },
         { slot: "D2", brand: "Citadel", type: "Layer 1", name: "Ushabti Bone", family: "Tans" },
         { slot: "D3", brand: "Citadel", type: "Layer 2", name: "Screaming Skull", family: "Tans" },
@@ -261,7 +284,7 @@
         { slot: "D11", brand: "Citadel", type: "Open Slot", name: null, family: null },
         { slot: "D12", brand: "Citadel", type: "Open Slot", name: null, family: null },
 
-        // Rows O, P, Q (Your streamlined, clean AK Interactive Collection Layout)
+        // Rows O-Q (Your newly mapped, optimized AK Interactive sequence)
         { slot: "O1", brand: "AK Interactive", type: "Base", name: "Black Purple", family: "AK Dark Magic" },
         { slot: "O2", brand: "AK Interactive", type: "Layer 1", name: "Dragon Blood", family: "AK Dark Magic" },
         { slot: "O3", brand: "AK Interactive", type: "Layer 2", name: "Magenta", family: "AK Dark Magic" },
@@ -304,22 +327,60 @@
 
     let selectedSlotId = null;
 
-    // Dynamically builds row headers and grid segments found within our database map
+    // Automated representative color engine to visually map tone gradients dynamically across families
+    function getFamilyColor(family, type) {
+        if (!family) return '#2e2e3a';
+        const f = family.toLowerCase();
+        
+        let baseHex = '#4a4a5a';
+        if (f.includes('black')) baseHex = '#1a1a1a';
+        else if (f.includes('grey') || f.includes('gray')) baseHex = '#4e5154';
+        else if (f.includes('white')) baseHex = '#dcdce3';
+        else if (f.includes('deep red') || f.includes('dark magic')) baseHex = '#5c0d12';
+        else if (f.includes('red') || f.includes('warm')) baseHex = '#9e1b1b';
+        else if (f.includes('blue') || f.includes('royal')) baseHex = '#1c3b73';
+        else if (f.includes('green') || f.includes('forest')) baseHex = '#1b4d22';
+        else if (f.includes('purple') || f.includes('violet')) baseHex = '#411d5c';
+        else if (f.includes('gold')) baseHex = '#8a6f28';
+        else if (f.includes('silver')) baseHex = '#70777a';
+        else if (f.includes('flesh')) baseHex = '#b87d63';
+        else if (f.includes('tan') || f.includes('brown') || f.includes('earth')) baseHex = '#5e412f';
+        else if (f.includes('yellow')) baseHex = '#bfa11b';
+
+        // Adjust darkness based on whether it is a Base, Layer 1, or Layer 2 to give visual gradient depth
+        if (type === 'Base') return baseHex;
+        if (type === 'Layer 1') return adjustColorBrightness(baseHex, 25);
+        if (type === 'Layer 2') return adjustColorBrightness(baseHex, 50);
+        return baseHex;
+    }
+
+    function adjustColorBrightness(hex, percent) {
+        let R = parseInt(hex.substring(1,3),16);
+        let G = parseInt(hex.substring(3,5),16);
+        let B = parseInt(hex.substring(5,7),16);
+        R = parseInt(R + percent); G = parseInt(G + percent); B = parseInt(B + percent);
+        R = (R<255)?R:255; G = (G<255)?G:255; B = (B<255)?B:255;
+        const rHex = (R.toString(16).length==1)?"0"+R.toString(16):R.toString(16);
+        const gHex = (G.toString(16).length==1)?"0"+G.toString(16):G.toString(16);
+        const bHex = (B.toString(16).length==1)?"0"+B.toString(16):B.toString(16);
+        return "#"+rHex+gHex+bHex;
+    }
+
+    // Builds horizontal rows and injects layout geometric slots safely
     function renderRack() {
         const containerMaster = document.getElementById('rack-rows-container');
         containerMaster.innerHTML = '';
 
-        // Extract and sort distinct Row letter identifiers present in the dataset
         const distinctRows = [...new Set(rackData.map(item => item.slot.charAt(0)))].sort();
 
         distinctRows.forEach(rowLetter => {
             const rowWrapper = document.createElement('div');
             rowWrapper.className = 'grid-row';
 
-            const brandHeader = rowLetter <= 'N' ? 'Citadel Collection' : 'AK Interactive Collection';
+            const brandHeader = rowLetter <= 'D' ? 'Citadel Collection' : 'AK Interactive Collection';
             const rowTitle = document.createElement('div');
             rowTitle.className = 'row-title';
-            rowTitle.innerText = `Row ${rowLetter}: ${brandHeader}`;
+            rowTitle.innerText = `Row ${rowLetter} — ${brandHeader}`;
 
             const paintGrid = document.createElement('div');
             paintGrid.className = 'paint-grid';
@@ -330,22 +391,25 @@
             containerMaster.appendChild(rowWrapper);
         });
 
-        // Inject items seamlessly into their target structural grids
         rackData.forEach(item => {
             const rowLetter = item.slot.charAt(0);
             const container = document.getElementById(`row-${rowLetter}`);
             if (!container) return;
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'slot-wrapper';
             
             const slotEl = document.createElement('div');
             slotEl.className = `slot ${!item.name ? 'empty' : ''} ${selectedSlotId === item.slot ? 'active-selection' : ''}`;
-            slotEl.onclick = () => selectSlot(item.slot);
-
-            const slotIdEl = document.createElement('div');
-            slotIdEl.className = 'slot-id';
-            slotIdEl.innerText = item.slot;
-            slotEl.appendChild(slotIdEl);
-
+            
             if (item.name) {
+                slotEl.style.backgroundColor = getFamilyColor(item.family, item.type);
+                slotEl.onclick = () => selectSlot(item.slot);
+
+                const slotIdEl = document.createElement('div');
+                slotIdEl.className = 'slot-id';
+                slotIdEl.innerText = item.slot;
+
                 const nameEl = document.createElement('div');
                 nameEl.className = 'paint-name';
                 nameEl.innerText = item.name;
@@ -353,10 +417,6 @@
                 const typeEl = document.createElement('div');
                 typeEl.className = 'paint-type';
                 typeEl.innerText = item.type;
-
-                const brandEl = document.createElement('div');
-                brandEl.className = 'paint-brand';
-                brandEl.innerText = item.brand || "";
 
                 const actionsEl = document.createElement('div');
                 actionsEl.className = 'actions';
@@ -374,20 +434,23 @@
                 actionsEl.appendChild(editBtn);
                 actionsEl.appendChild(delBtn);
 
+                slotEl.appendChild(slotIdEl);
                 slotEl.appendChild(nameEl);
                 slotEl.appendChild(typeEl);
-                slotEl.appendChild(brandEl);
-                slotEl.appendChild(actionsEl);
+                wrapper.appendChild(slotEl);
+                wrapper.appendChild(actionsEl);
             } else {
+                slotEl.onclick = () => changePaint(item.slot);
                 const addEl = document.createElement('div');
                 addEl.className = 'paint-name';
                 addEl.style.color = '#55556d';
-                addEl.innerText = '+ Add';
+                addEl.style.marginTop = '0';
+                addEl.innerText = `+ ${item.slot}`;
                 slotEl.appendChild(addEl);
-                slotEl.onclick = () => changePaint(item.slot);
+                wrapper.appendChild(slotEl);
             }
 
-            container.appendChild(slotEl);
+            container.appendChild(wrapper);
         });
     }
 
@@ -409,12 +472,9 @@
 
         viewerPanel.firstElementChild.style.display = 'none';
         activeInfo.style.display = 'block';
-        infoTitle.innerText = `(${currentPaint.brand || "System"}) ${currentPaint.family} Set Sequence`;
+        infoTitle.innerText = `[${currentPaint.brand}] ${currentPaint.family} Triad Progression`;
 
-        // Gather colors sharing the same matching family identity label string
         const familyTriad = rackData.filter(p => p.family === currentPaint.family && p.family !== null);
-        
-        // Dynamic sorting check enforcing chronological alignment: Base -> Layer 1 -> Layer 2
         const orderMap = { "Base": 1, "Layer 1": 2, "Layer 2": 3 };
         familyTriad.sort((a, b) => (orderMap[a.type] || 99) - (orderMap[b.type] || 99));
 
@@ -424,7 +484,6 @@
             stepEl.className = 'triad-step';
             stepEl.innerText = `${step.type}: ${step.name}`;
             
-            // Highlight and bold selected element matching clicked slot state
             if (step.slot === slotId) {
                 stepEl.classList.add('selected');
                 stepEl.style.fontWeight = 'bold';
@@ -441,7 +500,6 @@
         });
     }
 
-    // Dynamic unlinked storage configuration controllers
     function clearSlot(slotId) {
         const item = rackData.find(p => p.slot === slotId);
         if (item) {
@@ -472,7 +530,6 @@
         }
     }
 
-    // Run layout generator initialization setup execution
     renderRack();
 </script>
 </body>
