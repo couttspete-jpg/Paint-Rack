@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Paint Rack Tracker</title>
+    <style>
+        :root {
+            --bg-dark: #121214;
+            --panel-bg: #1a1a1e;
+            --border-color: #2c2c35;
+            --text-main: #e1e1e6;
+            --text-dim: #8f8f9d;
+            --accent: #6200ee;
+            --hex-w: 52px;
+            --hex-h: 60px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Search & Stats Bar Header */
+        .header-container {
+            width: 100%;
+            max-width: 600px;
+            position: sticky;
+            top: 0;
+            background-color: var(--bg-dark);
+            padding: 5px 0 10px 0;
+            z-index: 50;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+            color: var(--text-main);
+            font-size: 1rem;
+            box-sizing: border-box;
+            margin-bottom: 8px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            background: var(--panel-bg);
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+
+        /* Mobile Responsive Scroll Engine */
+        .grid-viewport {
+            width: 100vw;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 60vh;
+            padding: 10px 0;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .grid-canvas {
+            padding: 20px;
+            background: #16161a;
+            border-radius: 12px;
+            min-width: 1150px; /* Forces safety row width constraint */
+        }
+
+        .hex-row {
+            display: flex;
+            margin-bottom: -15px; /* Creates honeycomb interlock nesting */
+        }
+
+        /* Zig-Zag Row Offset Math */
+        .hex-row:nth-child(odd) {
+            margin-left: 28px;
+        }
+
+        .hex-cell {
+            width: var(--hex-w);
+            height: var(--hex-h);
+            background-color: #24242b;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            margin-right: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            cursor: pointer;
+            position: relative;
+            transition: opacity 0.2s ease, transform 0.1s;
+            user-select: none;
+        }
+
+        .hex-cell:active { transform: scale(0.9); }
+
+        .hex-coord {
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 2px;
+            font-size: 0.55rem;
+        }
+
+        .hex-title {
+            font-size: 0.5rem;
+            text-align: center;
+            width: 85%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* Brand Identification Indicators */
+        .brand-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 8px;
+        }
+        .dot-citadel { background-color: #ffd700; }
+        .dot-ak { background-color: #00ff66; }
+        .dot-ap { background-color: #ff007f; }
+
+        .hex-dimmed {
+            opacity: 0.15 !important;
+        }
+
+        /* Interactive Drawer Panels */
+        .panel {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--panel-bg);
+            border-radius: 12px 12px 0 0;
+            border: 1px solid var(--border-color);
+            margin-top: 10px;
+            padding: 15px;
+            box-sizing: border-box;
+            display: none;
+        }
+
+        .panel-active { display: block; }
+
+        .swatch-display {
+            width: 100%;
+            height: 35px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .triad-flow-container {
+            background: #121214;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-top: 8px;
+        }
+
+        .triad-step { color: var(--text-dim); }
+        .triad-active { color: #fff !important; font-weight: bold; text-decoration: underline; }
+
+        /* Editing and Filtering Layouts */
+        .brand-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: #25252c;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .tab-active { background: var(--accent); font-weight: bold; }
+
+        .catalog-search-input {
+            width: 100%;
+            padding: 10px;
+            background: #121214;
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 6px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .dropdown-list {
+            max-height: 140px;
+            overflow-y: auto;
+            background: #121214;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 10px;
+        }
+
+        .dropdown-item {
+            padding: 10px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #1a1a1e;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .dropdown-item:hover, .dropdown-item:active { background: #1e1e24; }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-save { background: #00cc66; color: #fff; }
+        .btn-clear { background: #cc3333; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <input type="text" id="mainSearch" class="search-bar" placeholder="Search name, brand, or type (e.g. contrast, metallic)..." oninput="runGlobalSearch()">
+        <div class="stats-bar">
+            <span id="stat-total">Paints: 0</span>
+            <span id="stat-empty">Empty Slots: 320</span>
+        </div>
+    </div>
+
+    <div class="grid-viewport">
+        <div class="grid-canvas" id="canvas-grid"></div>
+    </div>
+
+    <div id="view-panel" class="panel">
+        <h3 id="view-name" style="margin:0;">Paint Name</h3>
+        <span id="view-meta" style="font-size:0.8rem; color:var(--text-dim);">Brand · Type</span>
+        <div id="view-swatch" class="swatch-display"></div>
+        <div class="triad-flow-container">
+            <strong>Triad Setup:</strong><br>
+            <div id="view-triad" style="margin-top:5px;"></div>
+        </div>
+    </div>
+
+    <div id="edit-panel" class="panel">
+        <h3 id="edit-coords" style="margin:0 0 10px 0;">Edit Slot Coordinate</h3>
+        <div class="brand-tabs">
+            <button class="tab-btn tab-active" onclick="filterTab('All', this)">All</button>
+            <button class="tab-btn" onclick="filterTab('Citadel', this)">Citadel</button>
+            <button class="tab-btn" onclick="filterTab('AK', this)">AK</button>
+            <button class="tab-btn" onclick="filterTab('Army Painter', this)">AP</button>
+        </div>
+        <input type="text" id="catalogSearch" class="catalog-search-input" placeholder="Type color name to lookup..." oninput="updateCatalogDropdown()">
+        <div class="dropdown-list" id="dropdown-box"></div>
+        <div class="action-row">
+            <button class="btn btn-save" onclick="commitAssignment()">Save Paint</button>
+            <button class="btn btn-clear" onclick="clearAssignment()">Vacate Slot</button>
+        </div>
+    </div>
+
+    <script>
+        const cols = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T'];
+        const rowsCount = 16;
+        let selectedCoord = null;
+        let selectedPaintFromCatalog = null;
+        let activeTabBrand = 'All';
+
+        // Core Global Master Catalog (Expanded Ranges)
+        const paintCatalog = [
+            // Citadel Core Ranges
+            { name: "Mephiston Red", brand: "Citadel", type: "Base", color: "#9a1115", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] },
+            { name: "Evil Sunz Scarlet", brand: "Citadel", type: "Layer", color: "#c01413", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] },
+            { name: "Wild Rider Red", brand: "Citadel", type: "Layer", color: "#e82e1b", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] },
+            { name: "Khorne Red", brand: "Citadel", type: "Base", color: "#6a0005", triad: ["Khorne Red", "Wazdakka Red", "Squig Orange"] },
+            { name: "Wazdakka Red", brand: "Citadel", type: "Layer", color: "#880c1e", triad: ["Khorne Red", "Wazdakka Red", "Squig Orange"] },
+            { name: "Squig Orange", brand: "Citadel", type: "Layer", color: "#a74d36", triad: ["Khorne Red", "Wazdakka Red", "Squig Orange"] },
+            { name: "Macragge Blue", brand: "Citadel", type: "Base", color: "#0d407f", triad: ["Macragge Blue", "Alaitoc Blue", "Hoeth Blue"] },
+            { name: "Alaitoc Blue", brand: "Citadel", type: "Layer", color: "#254a76", triad: ["Macragge Blue", "Alaitoc Blue", "Hoeth Blue"] },
+            { name: "Hoeth Blue", brand: "Citadel", type: "Layer", color: "#4c78a4", triad: ["Macragge Blue", "Alaitoc Blue", "Hoeth Blue"] },
+            { name: "Caliban Green", brand: "Citadel", type: "Base", color: "#0a3d21", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] },
+            { name: "Warpstone Glow", brand: "Citadel", type: "Layer", color: "#137438", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] },
+            { name: "Moot Green", brand: "Citadel", type: "Layer", color: "#3da224", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] },
+            { name: "Abaddon Black", brand: "Citadel", type: "Base", color: "#000000", triad: ["Abaddon Black", "Dark Reaper", "Fenrisian Grey"] },
+            { name: "White Scar", brand: "Citadel", type: "Layer", color: "#ffffff", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] },
+            { name: "Blood Angels Red", brand: "Citadel", type: "Contrast", color: "#9c1214", triad: ["Contrast Mode Only"] },
+            { name: "Imperial Fists Yellow", brand: "Citadel", type: "Contrast", color: "#ffcc00", triad: ["Contrast Mode Only"] },
+            
+            // AK Gen 3 Colors
+            { name: "Black Purple", brand: "AK", type: "Base", color: "#2b132b", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
+            { name: "Dragon Blood", brand: "AK", type: "Layer 1", color: "#6e1a24", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
+            { name: "Magenta", brand: "AK", type: "Layer 2", color: "#b5215e", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
+            { name: "Cold Green", brand: "AK", type: "Base", color: "#006b54", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
+            { name: "Green Skin Punch", brand: "AK", type: "Layer 1", color: "#118c4f", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
+            { name: "Slime Green", brand: "AK", type: "Layer 2", color: "#7bc352", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
+            { name: "Deep Yellow", brand: "AK", type: "Base", color: "#fab805", triad: ["Deep Yellow", "Sahara Yellow", "Icy Yellow"] },
+            { name: "Anthracite Gray", brand: "AK", type: "Base", color: "#272d33", triad: ["Anthracite Gray", "Basalt Gray", "Graphite"] },
+            
+            // Army Painter Warpaints & Speedpaints
+            { name: "Matt Black", brand: "Army Painter", type: "Base", color: "#111111", triad: ["Matt Black", "Uniform Grey", "Ash Grey"] },
+            { name: "Daemonic Yellow", brand: "Army Painter", type: "Base", color: "#f3cc12", triad: ["Daemonic Yellow", "Flash Yellow", "Elven Flesh"] },
+            { name: "Zealot Yellow", brand: "Army Painter", type: "Speedpaint", color: "#e89902", triad: ["Speedpaint Single Coat"] },
+            { name: "Slaughter Red", brand: "Army Painter", type: "Speedpaint", color: "#8e020c", triad: ["Speedpaint Single Coat"] }
+        ];
+
+        // Hydrate Initial Physical Placement Coordinates from user records
+        const activeWallLayout = {
+            "A1": { name: "Mephiston Red", brand: "Citadel", type: "Base", color: "#9a1115", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] },
+            "A3": { name: "Wild Rider Red", brand: "Citadel", type: "Layer", color: "#e82e1b", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] },
+            "A4": { name: "Khorne Red", brand: "Citadel", type: "Base", color: "#6a0005", triad: ["Khorne Red", "Wazdakka Red", "Squig Orange"] },
+            "A6": { name: "Squig Orange", brand: "Citadel", type: "Layer", color: "#a74d36", triad: ["Khorne Red", "Wazdakka Red", "Squig Orange"] },
+            "B1": { name: "Macragge Blue", brand: "Citadel", type: "Base", color: "#0d407f", triad: ["Macragge Blue", "Alaitoc Blue", "Hoeth Blue"] },
+            "C1": { name: "Caliban Green", brand: "Citadel", type: "Base", color: "#0a3d21", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] },
+            "C3": { name: "Moot Green", brand: "Citadel", type: "Layer", color: "#3da224", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] },
+            "E9": { name: "White Scar", brand: "Citadel", type: "Layer", color: "#ffffff", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] },
+            "H1": { name: "Abaddon Black", brand: "Citadel", type: "Base", color: "#000000", triad: ["Abaddon Black", "Dark Reaper", "Fenrisian Grey"] },
+            "O1": { name: "Black Purple", brand: "AK", type: "Base", color: "#2b132b", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
+            "O2": { name: "Dragon Blood", brand: "AK", type: "Layer 1", color: "#6e1a24", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
+            "O3": { name: "Magenta", brand: "AK", type: "Layer 2", color: "#b5215e", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
+            "O4": { name: "Cold Green", brand: "AK", type: "Base", color: "#006b54", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
+            "O5": { name: "Green Skin Punch", brand: "AK", type: "Layer 1", color: "#118c4f", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] }
+        };
+
+        // Initialize Hex Map Grid Assembly
+        function renderHexGrid() {
+            const canvas = document.getElementById('canvas-grid');
+            canvas.innerHTML = '';
+
+            for (let r = 1; r <= rowsCount; r++) {
+                const rowObj = document.createElement('div');
+                rowObj.className = 'hex-row';
+
+                cols.forEach(colName => {
+                    const coordStr = `${colName}${r}`;
+                    const cell = document.createElement('div');
+                    cell.className = 'hex-cell';
+                    cell.id = `cell-${coordStr}`;
+                    cell.setAttribute('data-coord', coordStr);
+
+                    // Add Coord Header
+                    const coordLabel = document.createElement('span');
+                    coordLabel.className = 'hex-coord';
+                    coordLabel.innerText = coordStr;
+                    cell.appendChild(coordLabel);
+
+                    // Add Title and Color configuration
+                    const titleLabel = document.createElement('span');
+                    titleLabel.className = 'hex-title';
+
+                    if (activeWallLayout[coordStr]) {
+                        const activeItem = activeWallLayout[coordStr];
+                        titleLabel.innerText = activeItem.name;
+                        cell.style.backgroundColor = activeItem.color;
+
+                        // Create brand visual cue dot
+                        const bDot = document.createElement('div');
+                        bDot.className = `brand-dot dot-${activeItem.brand === 'Citadel' ? 'citadel' : activeItem.brand === 'AK' ? 'ak' : 'ap'}`;
+                        cell.appendChild(bDot);
+
+                        // Visual contrast adjustment
+                        if(activeItem.color === '#ffffff') {
+                            cell.style.color = '#000';
+                            coordLabel.style.color = 'rgba(0,0,0,0.5)';
+                        }
+                        cell.onclick = () => launchViewPanel(coordStr, activeItem);
+                    } else {
+                        titleLabel.innerText = '';
+                        cell.onclick = () => launchEditPanel(coordStr);
+                    }
+
+                    cell.appendChild(titleLabel);
+                    rowObj.appendChild(cell);
+                });
+                canvas.appendChild(rowObj);
+            }
+            evaluateStatistics();
+        }
+
+        // View Mode Panel Engine
+        function launchViewPanel(coord, paint) {
+            document.getElementById('edit-panel').className = 'panel';
+            const panel = document.getElementById('view-panel');
+            panel.className = 'panel panel-active';
+
+            document.getElementById('view-name').innerText = paint.name + ` (${coord})`;
+            document.getElementById('view-meta').innerText = `${paint.brand} · ${paint.type}`;
+            document.getElementById('view-swatch').style.backgroundColor = paint.color;
+
+            // Generate triad highlight parsing strings
+            const triadBox = document.getElementById('view-triad');
+            triadBox.innerHTML = '';
+            
+            if(paint.triad && paint.triad.length > 1) {
+                paint.triad.forEach((stepName, index) => {
+                    const segment = document.createElement('span');
+                    segment.className = 'triad-step';
+                    if(stepName.toLowerCase() === paint.name.toLowerCase()) {
+                        segment.className = 'triad-step triad-active';
+                    }
+                    segment.innerText = stepName;
+                    triadBox.appendChild(segment);
+                    if(index < paint.triad.length - 1) {
+                        triadBox.innerHTML += ' <span style="color:#555;">›</span> ';
+                    }
+                });
+            } else {
+                triadBox.innerHTML = `<span class="triad-step">${paint.triad ? paint.triad[0] : 'No assigned triad chain.'}</span>`;
+            }
+        }
+
+        // Edit Mode Configuration 
+        function launchEditPanel(coord) {
+            document.getElementById('view-panel').className = 'panel';
+            const panel = document.getElementById('edit-panel');
+            panel.className = 'panel panel-active';
+            
+            selectedCoord = coord;
+            document.getElementById('edit-coords').innerText = `Assign Slot: ${coord}`;
+            document.getElementById('catalogSearch').value = '';
+            selectedPaintFromCatalog = null;
+            updateCatalogDropdown();
+        }
+
+        function filterTab(brand, element) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn');
+            element.className = 'tab-btn tab-active';
+            activeTabBrand = brand;
+            updateCatalogDropdown();
+        }
+
+        function updateCatalogDropdown() {
+            const searchVal = document.getElementById('catalogSearch').value.toLowerCase();
+            const box = document.getElementById('dropdown-box');
+            box.innerHTML = '';
+
+            const filtered = paintCatalog.filter(p => {
+                const matchesBrand = (activeTabBrand === 'All' || p.brand === activeTabBrand);
+                const matchesSearch = p.name.toLowerCase().includes(searchVal);
+                return matchesBrand && matchesSearch;
+            });
+
+            filtered.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'dropdown-item';
+                row.innerHTML = `<span>${p.name}</span><span style="color:#666; font-size:0.7rem;">${p.brand}</span>`;
+                row.onclick = () => {
+                    document.getElementById('catalogSearch').value = p.name;
+                    selectedPaintFromCatalog = p;
+                };
+                box.appendChild(row);
+            });
+        }
+
+        function commitAssignment() {
+            if (!selectedPaintFromCatalog || !selectedCoord) return;
+            activeWallLayout[selectedCoord] = { ...selectedPaintFromCatalog };
+            renderHexGrid();
+            document.getElementById('edit-panel').className = 'panel';
+        }
+
+        function clearAssignment() {
+            if (!selectedCoord) return;
+            delete activeWallLayout[selectedCoord];
+            renderHexGrid();
+            document.getElementById('edit-panel').className = 'panel';
+        }
+
+        // Global UI Dynamic Dimming Engine
+        function runGlobalSearch() {
+            const matchStr = document.getElementById('mainSearch').value.toLowerCase();
+            
+            cols.forEach(col => {
+                for(let r = 1; r <= rowsCount; r++) {
+                    const coord = `${col}${r}`;
+                    const targetCell = document.getElementById(`cell-${coord}`);
+                    if (!targetCell) continue;
+
+                    const activePaint = activeWallLayout[coord];
+
+                    if (matchStr === '') {
+                        targetCell.classList.remove('hex-dimmed');
+                        continue;
+                    }
+
+                    if (activePaint) {
+                        const hayName = activePaint.name.toLowerCase();
+                        const hayBrand = activePaint.brand.toLowerCase();
+                        const hayType = activePaint.type.toLowerCase();
+
+                        if (hayName.includes(matchStr) || hayBrand.includes(matchStr) || hayType.includes(matchStr)) {
+                            targetCell.classList.remove('hex-dimmed');
+                        } else {
+                            targetCell.classList.add('hex-dimmed');
+                        }
+                    } else {
+                        targetCell.classList.add('hex-dimmed');
+                    }
+                }
+            });
+        }
+
+        function evaluateStatistics() {
+            const calculatedTotal = Object.keys(activeWallLayout).length;
+            const openCapacity = (20 * 16) - calculatedTotal;
+            document.getElementById('stat-total').innerText = `Paints: ${calculatedTotal}`;
+            document.getElementById('stat-empty').innerText = `Empty Slots: ${openCapacity}`;
+        }
+
+        // Initialize First Mount
+        window.onload = renderHexGrid;
+    </script>
+</body>
+</html>
