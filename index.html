@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Paint Rack Tracker Pro</title>
+    <title>Paint Rack Tracker Ultra</title>
     <style>
         :root {
             --bg-dark: #121214;
@@ -25,17 +25,18 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow-x: hidden;
+            overflow: hidden;
+            height: 100vh;
+            box-sizing: border-box;
         }
 
         .header-container {
             width: 100%;
             max-width: 600px;
-            position: sticky;
-            top: 0;
             background-color: var(--bg-dark);
             padding: 5px 0 10px 0;
             z-index: 50;
+            flex-shrink: 0;
         }
 
         .search-bar {
@@ -62,21 +63,26 @@
 
         .grid-viewport {
             width: 100vw;
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: 55vh;
-            padding: 10px 0;
-            -webkit-overflow-scrolling: touch;
-            display: flex;
-            justify-content: flex-start;
+            flex-grow: 1;
+            overflow: hidden; 
+            position: relative;
+            background: #0f0f11;
+            border-radius: 12px;
+            touch-action: none;
         }
 
         .grid-canvas {
-            padding: 20px;
+            padding: 60px;
             background: #16161a;
-            border-radius: 12px;
-            min-width: 1200px; 
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: 0 0;
+            will-change: transform;
+            cursor: grab;
         }
+
+        .grid-canvas:active { cursor: grabbing; }
 
         .hex-row {
             display: flex;
@@ -100,11 +106,9 @@
             font-size: 0.65rem;
             cursor: pointer;
             position: relative;
-            transition: opacity 0.2s ease, transform 0.1s;
+            transition: opacity 0.2s ease;
             user-select: none;
         }
-
-        .hex-cell:active { transform: scale(0.9); }
 
         .hex-coord {
             font-weight: bold;
@@ -141,15 +145,16 @@
             width: 100%;
             max-width: 600px;
             background-color: var(--panel-bg);
-            border-radius: 12px;
+            border-radius: 12px 12px 0 0;
             border: 1px solid var(--border-color);
-            margin-top: 10px;
             padding: 15px;
             box-sizing: border-box;
             display: none;
+            position: fixed;
+            bottom: 0;
+            z-index: 100;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.5);
         }
-
-        .panel-active { display: block; }
 
         .swatch-display {
             width: 100%;
@@ -202,7 +207,7 @@
         }
 
         .dropdown-list {
-            max-height: 160px;
+            max-height: 120px;
             overflow-y: auto;
             background: #121214;
             border-radius: 6px;
@@ -219,8 +224,6 @@
             justify-content: space-between;
         }
 
-        .dropdown-item:hover { background: #1e1e24; }
-
         .action-row {
             display: flex;
             gap: 10px;
@@ -236,33 +239,41 @@
         }
         .btn-save { background: #00cc66; color: #fff; }
         .btn-clear { background: #cc3333; color: #fff; }
+        .close-panel-x {
+            float: right;
+            cursor: pointer;
+            color: var(--text-dim);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
     <div class="header-container">
-        <input type="text" id="mainSearch" class="search-bar" placeholder="Search name, range, or type (e.g. contrast, shade)..." oninput="runGlobalSearch()">
+        <input type="text" id="mainSearch" class="search-bar" placeholder="Search name, range, or type (e.g. shade, base)..." oninput="runGlobalSearch()">
         <div class="stats-bar">
-            <span id="stat-total">Paints: 0</span>
+            <span id="stat-total">Paints Placed: 0</span>
             <span id="stat-empty">Empty Slots: 320</span>
         </div>
     </div>
 
-    <div class="grid-viewport">
+    <div class="grid-viewport" id="viewport">
         <div class="grid-canvas" id="canvas-grid"></div>
     </div>
 
     <div id="view-panel" class="panel">
+        <span class="close-panel-x" onclick="closePanels()">✕</span>
         <h3 id="view-name" style="margin:0;">Paint Name</h3>
         <span id="view-meta" style="font-size:0.8rem; color:var(--text-dim);">Brand · Type</span>
         <div id="view-swatch" class="swatch-display"></div>
         <div class="triad-flow-container">
-            <strong>Triad Alignment:</strong><br>
+            <strong>Triad Alignment (Vertically Down):</strong><br>
             <div id="view-triad" style="margin-top:5px;"></div>
         </div>
     </div>
 
     <div id="edit-panel" class="panel">
+        <span class="close-panel-x" onclick="closePanels()">✕</span>
         <h3 id="edit-coords" style="margin:0 0 10px 0;">Assign Slot</h3>
         <div class="brand-tabs">
             <button class="tab-btn tab-active" onclick="filterTab('All', this)">All</button>
@@ -285,9 +296,8 @@
         let selectedPaintFromCatalog = null;
         let activeTabBrand = 'All';
 
-        // MASTER COMPREHENSIVE RECONSTRUCTED CATALOG (CITADEL CORE, AK GEN 3 READS, AP SPEEDPAINT 2.0)
         const paintCatalog = [
-            // --- CITADEL BASES & TRIADS ---
+            // --- CITADEL ---
             { name: "Mephiston Red", brand: "Citadel", type: "Base", color: "#9a1115", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] },
             { name: "Evil Sunz Scarlet", brand: "Citadel", type: "Layer", color: "#c01413", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] },
             { name: "Wild Rider Red", brand: "Citadel", type: "Layer", color: "#e82e1b", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] },
@@ -303,378 +313,11 @@
             { name: "Moot Green", brand: "Citadel", type: "Layer", color: "#3da224", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] },
             { name: "Castellan Green", brand: "Citadel", type: "Base", color: "#2b331f", triad: ["Castellan Green", "Loren Forest", "Straken Green"] },
             { name: "Loren Forest", brand: "Citadel", type: "Layer", color: "#4a5838", triad: ["Castellan Green", "Loren Forest", "Straken Green"] },
+            { name: "Straken Green", brand: "Citadel", type: "Layer", color: "#608945", triad: ["Castellan Green", "Loren Forest", "Straken Green"] },
+            { name: "Naggaroth Night", brand: "Citadel", type: "Base", color: "#3b1442", triad: ["Naggaroth Night", "Xereus Purple", "Genestealer Purple"] },
             { name: "Xereus Purple", brand: "Citadel", type: "Layer", color: "#47125a", triad: ["Naggaroth Night", "Xereus Purple", "Genestealer Purple"] },
-            { name: "Warpfiend Grey", brand: "Citadel", type: "Layer", color: "#665d66", triad: ["Daemonette Hide", "Warpfiend Grey", "Slaanesh Grey"] },
+            { name: "Genestealer Purple", brand: "Citadel", type: "Layer", color: "#764094", triad: ["Naggaroth Night", "Xereus Purple", "Genestealer Purple"] },
             { name: "Averland Sunset", brand: "Citadel", type: "Base", color: "#fbb81c", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] },
             { name: "Yriel Yellow", brand: "Citadel", type: "Layer", color: "#ffd900", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] },
-            { name: "Troll Slayer Orange", brand: "Citadel", type: "Layer", color: "#f16c28", triad: ["Jokaero Orange", "Troll Slayer Orange", "Fire Dragon Bright"] },
-            { name: "Bugman's Glow", brand: "Citadel", type: "Base", color: "#804e40", triad: ["Bugman's Glow", "Cadian Fleshtone", "Kislev Flesh"] },
-            { name: "Catachan Flesh", brand: "Citadel", type: "Base", color: "#2e1711", triad: ["Catachan Flesh", "Bloodreaver Flesh", "Knight-Questor Flesh"] },
-            { name: "Rakarth Flesh", brand: "Citadel", type: "Base", color: "#9c9489", triad: ["Rakarth Flesh", "Flayed One Flesh", "Pallid Wych Flesh"] },
-            { name: "Pallid Wych Flesh", brand: "Citadel", type: "Layer", color: "#cdcbc2", triad: ["Rakarth Flesh", "Flayed One Flesh", "Pallid Wych Flesh"] },
-            { name: "Mournfang Brown", brand: "Citadel", type: "Base", color: "#492412", triad: ["Mournfang Brown", "Skrag Brown", "Deathclaw"] },
-            { name: "Baneblade Brown", brand: "Citadel", type: "Layer", color: "#7f6e5f", triad: ["Gorthor Brown", "Baneblade Brown", "Karak Stone"] },
-            { name: "Dryad Bark", brand: "Citadel", type: "Base", color: "#2b2622", triad: ["Dryad Bark", "Gorthor Brown", "Baneblade Brown"] },
-            { name: "Karak Stone", brand: "Citadel", type: "Layer", color: "#a5967a", triad: ["Gorthor Brown", "Baneblade Brown", "Karak Stone"] },
-            { name: "Abaddon Black", brand: "Citadel", type: "Base", color: "#000000", triad: ["Abaddon Black", "Dark Reaper", "Fenrisian Grey"] },
-            { name: "Mechanicus Standard Grey", brand: "Citadel", type: "Base", color: "#394246", triad: ["Mechanicus Standard Grey", "Dawnstone", "Administratum Grey"] },
-            { name: "Ulthuan Grey", brand: "Citadel", type: "Layer", color: "#c4e1e3", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] },
-            { name: "Grey Seer", brand: "Citadel", type: "Base", color: "#a1a6a9", triad: ["Grey Seer", "Fenrisian Grey", "White Scar"] },
-            { name: "Screamer Pink", brand: "Citadel", type: "Base", color: "#7c1645", triad: ["Screamer Pink", "Pink Horror", "Emperor's Children"] },
-            { name: "Barak-Nar Burgundy", brand: "Citadel", type: "Base", color: "#45162b", triad: ["Barak-Nar Burgundy", "Screamer Pink", "Pink Horror"] },
-            { name: "The Fang", brand: "Citadel", type: "Base", color: "#405265", triad: ["The Fang", "Russ Grey", "Fenrisian Grey"] },
-            { name: "Death Guard Green", brand: "Citadel", type: "Base", color: "#747852", triad: ["Death Guard Green", "Nurgling Green", "Ogryn Camo"] },
-            { name: "Corax White", brand: "Citadel", type: "Base", color: "#dededc", triad: ["Corax White", "White Scar"] },
-            { name: "Ushabti Bone", brand: "Citadel", type: "Layer", color: "#bcbbb0", triad: ["Zandri Dust", "Ushabti Bone", "Screaming Skull"] },
-            { name: "Orruk Flesh", brand: "Citadel", type: "Base", color: "#7fa074", triad: ["Orruk Flesh", "Biel-Tan Green Shade"] },
-            { name: "Wraithbone", brand: "Citadel", type: "Base", color: "#dbd4c5", triad: ["Wraithbone", "White Scar"] },
-
-            // --- CITADEL METALLICS ---
-            { name: "Retributor Armour", brand: "Citadel", type: "Metallic", color: "#c69941", triad: ["Retributor Armour", "Reikland Fleshshade", "Auric Armour Gold"] },
-            { name: "Leadbelcher", brand: "Citadel", type: "Metallic", color: "#87888c", triad: ["Leadbelcher", "Nuln Oil", "Ironbreaker"] },
-            { name: "Runefang Steel", brand: "Citadel", type: "Metallic", color: "#b6bbc3", triad: ["Ironbreaker", "Runefang Steel", "Stormhost Silver"] },
-            { name: "Stormhost Silver", brand: "Citadel", type: "Metallic", color: "#cbd3db", triad: ["Ironbreaker", "Stormhost Silver"] },
-
-            // --- CITADEL SHADES ---
-            { name: "Nuln Oil", brand: "Citadel", type: "Shade", color: "#111111", triad: ["Recess Shade Fluid"] },
-            { name: "Agrax Earthshade", brand: "Citadel", type: "Shade", color: "#221711", triad: ["Recess Shade Fluid"] },
-            { name: "Reikland Fleshshade", brand: "Citadel", type: "Shade", color: "#451e13", triad: ["Flesh Tint Shade Fluid"] },
-            { name: "Coelia Greenshade", brand: "Citadel", type: "Shade", color: "#004247", triad: ["Deep Shadow Tint"] },
-
-            // --- CITADEL CONTRAST RANGE (ALL MAIN FLUIDS) ---
-            { name: "Blood Angels Red", brand: "Citadel", type: "Contrast", color: "#9c1214", triad: ["One-Coat Application"] },
-            { name: "Imperial Fists Yellow", brand: "Citadel", type: "Contrast", color: "#ffcc00", triad: ["One-Coat Application"] },
-            { name: "Black Templar", brand: "Citadel", type: "Contrast", color: "#1a1a1a", triad: ["One-Coat Application"] },
-            { name: "Guilliman Flesh", brand: "Citadel", type: "Contrast", color: "#bd8168", triad: ["One-Coat Application"] },
-            { name: "Tesseract Glow", brand: "Citadel", type: "Technical", color: "#54c414", triad: ["Bright Fluorescent Overlay"] },
-            { name: "Contrast Medium", brand: "Citadel", type: "Technical", color: "#efefef", triad: ["Thinner / Glaze Maker"] },
-
-            // --- AK INTERACTIVE GEN 3 (READ FROM PREVIOUS LAYOUT MAPS) ---
-            { name: "Black Purple", brand: "AK", type: "Base", color: "#2b132b", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
-            { name: "Dragon Blood", brand: "AK", type: "Layer 1", color: "#6e1a24", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
-            { name: "Magenta", brand: "AK", type: "Layer 2", color: "#b5215e", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
-            { name: "Cold Green", brand: "AK", type: "Base", color: "#006b54", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
-            { name: "Green Skin Punch", brand: "AK", type: "Layer 1", color: "#118c4f", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
-            { name: "Slime Green", brand: "AK", type: "Layer 2", color: "#7bc352", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
-            { name: "Deep Green", brand: "AK", type: "Base", color: "#0b3318", triad: ["Deep Green", "Frog Green", "Black Green"] },
-            { name: "Frog Green", brand: "AK", type: "Layer 1", color: "#4da846", triad: ["Deep Green", "Frog Green", "Black Green"] },
-            { name: "Black Green", brand: "AK", type: "Layer 2", color: "#051f0e", triad: ["Deep Green", "Frog Green", "Black Green"] },
-            { name: "Deep Yellow", brand: "AK", type: "Base", color: "#fab805", triad: ["Deep Yellow", "Sahara Yellow", "Icy Yellow"] },
-            { name: "Sahara Yellow", brand: "AK", type: "Layer 1", color: "#dca134", triad: ["Deep Yellow", "Sahara Yellow", "Icy Yellow"] },
-            { name: "Icy Yellow", brand: "AK", type: "Layer 2", color: "#fff385" },
-            { name: "Sun Red", brand: "AK", type: "Base", color: "#cc2429", triad: ["Sun Red", "Wine Red", "Carmine"] },
-            { name: "Wine Red", brand: "AK", type: "Layer 1", color: "#4a0d12", triad: ["Sun Red", "Wine Red", "Carmine"] },
-            { name: "Carmine", brand: "AK", type: "Layer 2", color: "#9e1b2b" },
-            { name: "Beast Brown", brand: "AK", type: "Base", color: "#593119", triad: ["Beast Brown", "Russet Shadow", "Afro Shadow"] },
-            { name: "Russet Shadow", brand: "AK", type: "Layer 1", color: "#42251b" },
-            { name: "Afro Shadow", brand: "AK", type: "Layer 2", color: "#301d17" },
-            { name: "Dark Prussian Blue", brand: "AK", type: "Base", color: "#102336", triad: ["Dark Prussian Blue", "Ocean Blue", "Arkhaiak Turquoise"] },
-            { name: "Ocean Blue", brand: "AK", type: "Layer 1", color: "#195270" },
-            { name: "Arkhaiak Turquoise", brand: "AK", type: "Layer 2", color: "#1c6869" },
-            { name: "Amethyst Blue", brand: "AK", type: "Base", color: "#2a2240", triad: ["Amethyst Blue", "Ducat Blue", "Deep Blue"] },
-            { name: "Ducat Blue", brand: "AK", type: "Layer 1", color: "#25405c" },
-            { name: "Deep Blue", brand: "AK", type: "Layer 2", color: "#0d2b45" },
-            { name: "Dark Blue", brand: "AK", type: "Base", color: "#111826", triad: ["Dark Blue", "Imperial Blue", "King Purple"] },
-            { name: "Imperial Blue", brand: "AK", type: "Layer 1", color: "#1d2a4a" },
-            { name: "King Purple", brand: "AK", type: "Layer 2", color: "#381c4a" },
-            { name: "Anthracite Gray", brand: "AK", type: "Base", color: "#272d33", triad: ["Anthracite Gray", "Basalt Gray", "Graphite"] },
-            { name: "Basalt Gray", brand: "AK", type: "Layer 1", color: "#4f5861" },
-            { name: "Graphite", brand: "AK", type: "Layer 2", color: "#1c1e21" },
-            { name: "White", brand: "AK", type: "Base", color: "#ffffff", triad: ["White", "Silver Gray", "Black"] },
-            { name: "Silver Gray", brand: "AK", type: "Layer 1", color: "#b3b9be" },
-            { name: "Black", brand: "AK", type: "Layer 2", color: "#0a0a0a" },
-
-            // --- ARMY PAINTER SPEEDPAINT 2.0 (EXPANDED FLUIDS CORE) ---
-            { name: "Zealot Yellow", brand: "Army Painter", type: "Speedpaint", color: "#f4b117", triad: ["Speedpaint 2.0 Solution"] },
-            { name: "Slaughter Red", brand: "Army Painter", type: "Speedpaint", color: "#9f1016", triad: ["Speedpaint 2.0 Solution"] },
-            { name: "Hive Tail Green", brand: "Army Painter", type: "Speedpaint", color: "#156b35", triad: ["Speedpaint 2.0 Solution"] },
-            { name: "Pallid Bone", brand: "Army Painter", type: "Speedpaint", color: "#dfd2b9", triad: ["Speedpaint 2.0 Solution"] },
-            { name: "Hardened Leather", brand: "Army Painter", type: "Speedpaint", color: "#834d28", triad: ["Speedpaint 2.0 Solution"] },
-            { name: "Cruusade Bone", brand: "Army Painter", type: "Speedpaint", color: "#e4dac2", triad: ["Speedpaint 2.0 Solution"] },
-            { name: "Grim Cloak", brand: "Army Painter", type: "Speedpaint", color: "#3f4347", triad: ["Speedpaint 2.0 Solution"] },
-            { name: "Broadsword Silver", brand: "Army Painter", type: "Speedpaint Metallic", color: "#8a8f94", triad: ["Speedpaint Metallic Variant"] },
-            { name: "Hoplite Gold", brand: "Army Painter", type: "Speedpaint Metallic", color: "#c19d45", triad: ["Speedpaint Metallic Variant"] }
-        ];
-
-        // Active Wall Placements Coordinates Mapping
-        const activeWallLayout = {
-            "A1": { name: "Mephiston Red", brand: "Citadel", type: "Base", color: "#9a1115", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] },
-            "A3": { name: "Wild Rider Red", brand: "Citadel", type: "Layer", color: "#e82e1b", triad: ["Mephiston Red", "Evil Sunz Scarlet", "Wild Rider Red"] },
-            "A4": { name: "Khorne Red", brand: "Citadel", type: "Base", color: "#6a0005", triad: ["Khorne Red", "Wazdakka Red", "Squig Orange"] },
-            "A6": { name: "Squig Orange", brand: "Citadel", type: "Layer", color: "#a74d36", triad: ["Khorne Red", "Wazdakka Red", "Squig Orange"] },
-            "A7": { name: "Screamer Pink", brand: "Citadel", type: "Base", color: "#7c1645", triad: ["Screamer Pink", "Pink Horror", "Emperor's Children"] },
-            "A10": { name: "Barak-Nar Burgundy", brand: "Citadel", type: "Base", color: "#45162b", triad: ["Barak-Nar Burgundy", "Screamer Pink", "Pink Horror"] },
-            "A15": { name: "Squig Orange", brand: "Citadel", type: "Layer", color: "#a74d36", triad: ["Khorne Red", "Wazdakka Red", "Squig Orange"] },
-            "B1": { name: "Macragge Blue", brand: "Citadel", type: "Base", color: "#0d407f", triad: ["Macragge Blue", "Alaitoc Blue", "Hoeth Blue"] },
-            "B4": { name: "Kantor Blue", brand: "Citadel", type: "Base", color: "#021f46", triad: ["Kantor Blue", "Alaitoc Blue", "Hoeth Blue"] },
-            "B13": { name: "The Fang", brand: "Citadel", type: "Base", color: "#405265", triad: ["The Fang", "Russ Grey", "Fenrisian Grey"] },
-            "C1": { name: "Caliban Green", brand: "Citadel", type: "Base", color: "#0a3d21", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] },
-            "C3": { name: "Moot Green", brand: "Citadel", type: "Layer", color: "#3da224", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] },
-            "C7": { name: "Castellan Green", brand: "Citadel", type: "Base", color: "#2b331f", triad: ["Castellan Green", "Loren Forest", "Straken Green"] },
-            "C8": { name: "Loren Forest", brand: "Citadel", type: "Layer", color: "#4a5838", triad: ["Castellan Green", "Loren Forest", "Straken Green"] },
-            "C14": { name: "Loren Forest", brand: "Citadel", type: "Layer", color: "#4a5838", triad: ["Castellan Green", "Loren Forest", "Straken Green"] },
-            "D2": { name: "Xereus Purple", brand: "Citadel", type: "Layer", color: "#47125a", triad: ["Naggaroth Night", "Xereus Purple", "Genestealer Purple"] },
-            "D5": { name: "Warpfiend Grey", brand: "Citadel", type: "Layer", color: "#665d66", triad: ["Daemonette Hide", "Warpfiend Grey", "Slaanesh Grey"] },
-            "E1": { name: "Averland Sunset", brand: "Citadel", type: "Base", color: "#fbb81c", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] },
-            "E2": { name: "Yriel Yellow", brand: "Citadel", type: "Layer", color: "#ffd900", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] },
-            "E5": { name: "Troll Slayer Orange", brand: "Citadel", type: "Layer", color: "#f16c28", triad: ["Jokaero Orange", "Troll Slayer Orange", "Fire Dragon Bright"] },
-            "E9": { name: "White Scar", brand: "Citadel", type: "Layer", color: "#ffffff", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] },
-            "E11": { name: "Ushabti Bone", brand: "Citadel", type: "Layer", color: "#bcbbb0", triad: ["Zandri Dust", "Ushabti Bone", "Screaming Skull"] },
-            "E15": { name: "White Scar", brand: "Citadel", type: "Layer", color: "#ffffff", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] },
-            "F1": { name: "Bugman's Glow", brand: "Citadel", type: "Base", color: "#804e40", triad: ["Bugman's Glow", "Cadian Fleshtone", "Kislev Flesh"] },
-            "F7": { name: "Catachan Flesh", brand: "Citadel", type: "Base", color: "#2e1711", triad: ["Catachan Flesh", "Bloodreaver Flesh", "Knight-Questor Flesh"] },
-            "F10": { name: "Rakarth Flesh", brand: "Citadel", type: "Base", color: "#9c9489", triad: ["Rakarth Flesh", "Flayed One Flesh", "Pallid Wych Flesh"] },
-            "F12": { name: "Pallid Wych Flesh", brand: "Citadel", type: "Layer", color: "#cdcbc2", triad: ["Rakarth Flesh", "Flayed One Flesh", "Pallid Wych Flesh"] },
-            "F14": { name: "Kantor Blue", brand: "Citadel", type: "Base", color: "#021f46", triad: ["Kantor Blue", "Alaitoc Blue", "Hoeth Blue"] },
-            "F16": { name: "Reikland Fleshshade", brand: "Citadel", type: "Shade", color: "#451e13", triad: ["Flesh Tint Shade Fluid"] },
-            "G1": { name: "Mournfang Brown", brand: "Citadel", type: "Base", color: "#492412", triad: ["Mournfang Brown", "Skrag Brown", "Deathclaw"] },
-            "G6": { name: "Baneblade Brown", brand: "Citadel", type: "Layer", color: "#7f6e5f", triad: ["Gorthor Brown", "Baneblade Brown", "Karak Stone"] },
-            "G7": { name: "Dryad Bark", brand: "Citadel", type: "Base", color: "#2b2622", triad: ["Dryad Bark", "Gorthor Brown", "Baneblade Brown"] },
-            "G9": { name: "Karak Stone", brand: "Citadel", type: "Layer", color: "#a5967a", triad: ["Gorthor Brown", "Baneblade Brown", "Karak Stone"] },
-            "G12": { name: "Karak Stone", brand: "Citadel", type: "Layer", color: "#a5967a", triad: ["Gorthor Brown", "Baneblade Brown", "Karak Stone"] },
-            "G16": { name: "Agrax Earthshade", brand: "Citadel", type: "Shade", color: "#221711", triad: ["Recess Shade Fluid"] },
-            "H1": { name: "Abaddon Black", brand: "Citadel", type: "Base", color: "#000000", triad: ["Abaddon Black", "Dark Reaper", "Fenrisian Grey"] },
-            "H7": { name: "Mechanicus Standard Grey", brand: "Citadel", type: "Base", color: "#394246", triad: ["Mechanicus Standard Grey", "Dawnstone", "Administratum Grey"] },
-            "H11": { name: "Ulthuan Grey", brand: "Citadel", type: "Layer", color: "#c4e1e3", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] },
-            "H12": { name: "White Scar", brand: "Citadel", type: "Layer", color: "#ffffff", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] },
-            "H13": { name: "Grey Seer", brand: "Citadel", type: "Base", color: "#a1a6a9", triad: ["Grey Seer", "Fenrisian Grey", "White Scar"] },
-            "H14": { name: "Ulthuan Grey", brand: "Citadel", type: "Layer", color: "#c4e1e3", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] },
-            "H15": { name: "White Scar", brand: "Citadel", type: "Layer", color: "#ffffff", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] },
-            "H16": { name: "Nuln Oil", brand: "Citadel", type: "Shade", color: "#111111", triad: ["Recess Shade Fluid"] },
-            "I1": { name: "Retributor Armour", brand: "Citadel", type: "Metallic", color: "#c69941", triad: ["Retributor Armour", "Reikland Fleshshade", "Auric Armour Gold"] },
-            "I7": { name: "Leadbelcher", brand: "Citadel", type: "Metallic", color: "#87888c", triad: ["Leadbelcher", "Nuln Oil", "Ironbreaker"] },
-            "I9": { name: "Runefang Steel", brand: "Citadel", type: "Metallic", color: "#b6bbc3", triad: ["Ironbreaker", "Runefang Steel", "Stormhost Silver"] },
-            "I15": { name: "Stormhost Silver", brand: "Citadel", type: "Metallic", color: "#cbd3db", triad: ["Ironbreaker", "Stormhost Silver"] },
-            "J3": { name: "Stormhost Silver", brand: "Citadel", type: "Metallic", color: "#cbd3db", triad: ["Ironbreaker", "Stormhost Silver"] },
-            "J6": { name: "Stormhost Silver", brand: "Citadel", type: "Metallic", color: "#cbd3db", triad: ["Ironbreaker", "Stormhost Silver"] },
-            "J7": { name: "Death Guard Green", brand: "Citadel", type: "Base", color: "#747852", triad: ["Death Guard Green", "Nurgling Green", "Ogryn Camo"] },
-            "J10": { name: "Corax White", brand: "Citadel", type: "Base", color: "#dededc", triad: ["Corax White", "White Scar"] },
-            "J11": { name: "White Scar", brand: "Citadel", type: "Layer", color: "#ffffff", triad: ["Celestra Grey", "Ulthuan Grey", "White Scar"] },
-            "J15": { name: "Pallid Wych Flesh", brand: "Citadel", type: "Layer", color: "#cdcbc2", triad: ["Rakarth Flesh", "Flayed One Flesh", "Pallid Wych Flesh"] },
-            "K11": { name: "Leadbelcher", brand: "Citadel", type: "Metallic", color: "#87888c", triad: ["Leadbelcher", "Nuln Oil", "Ironbreaker"] },
-            "L8": { name: "Xereus Purple", brand: "Citadel", type: "Layer", color: "#47125a", triad: ["Naggaroth Night", "Xereus Purple", "Genestealer Purple"] },
-            "M8": { name: "Yriel Yellow", brand: "Citadel", type: "Layer", color: "#ffd900", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] },
-            "M16": { name: "Coelia Greenshade", brand: "Citadel", type: "Shade", color: "#004247", triad: ["Deep Shadow Tint"] },
-            "N4": { name: "Imperial Fists Yellow", brand: "Citadel", type: "Contrast", color: "#ffcc00", triad: ["One-Coat Application"] },
-            "N11": { name: "Moot Green", brand: "Citadel", type: "Layer", color: "#3da224", triad: ["Caliban Green", "Warpstone Glow", "Moot Green"] },
-            "N14": { name: "Troll Slayer Orange", brand: "Citadel", type: "Layer", color: "#f16c28", triad: ["Jokaero Orange", "Troll Slayer Orange", "Fire Dragon Bright"] },
-            "N16": { name: "Tesseract Glow", brand: "Citadel", type: "Technical", color: "#54c414", triad: ["Bright Fluorescent Overlay"] },
-            
-            // AK Interactive Clustered Sets
-            "O1": { name: "Black Purple", brand: "AK", type: "Base", color: "#2b132b", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
-            "O2": { name: "Dragon Blood", brand: "AK", type: "Layer 1", color: "#6e1a24", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
-            "O3": { name: "Magenta", brand: "AK", type: "Layer 2", color: "#b5215e", triad: ["Black Purple", "Dragon Blood", "Magenta"] },
-            "O4": { name: "Cold Green", brand: "AK", type: "Base", color: "#006b54", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
-            "O5": { name: "Green Skin Punch", brand: "AK", type: "Layer 1", color: "#118c4f", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
-            "O6": { name: "Slime Green", brand: "AK", type: "Layer 2", color: "#7bc352", triad: ["Cold Green", "Green Skin Punch", "Slime Green"] },
-            "O7": { name: "Deep Green", brand: "AK", type: "Base", color: "#0b3318", triad: ["Deep Green", "Frog Green", "Black Green"] },
-            "O8": { name: "Frog Green", brand: "AK", type: "Layer 1", color: "#4da846", triad: ["Deep Green", "Frog Green", "Black Green"] },
-            "O9": { name: "Black Green", brand: "AK", type: "Layer 2", color: "#051f0e", triad: ["Deep Green", "Frog Green", "Black Green"] },
-            "O10": { name: "Deep Yellow", brand: "AK", type: "Base", color: "#fab805", triad: ["Deep Yellow", "Sahara Yellow", "Icy Yellow"] },
-            "O11": { name: "Sahara Yellow", brand: "AK", type: "Layer 1", color: "#dca134", triad: ["Deep Yellow", "Sahara Yellow", "Icy Yellow"] },
-            "O12": { name: "Icy Yellow", brand: "AK", type: "Layer 2", color: "#fff385" },
-            "O13": { name: "Sun Red", brand: "AK", type: "Base", color: "#cc2429", triad: ["Sun Red", "Wine Red", "Carmine"] },
-            "O14": { name: "Wine Red", brand: "AK", type: "Layer 1", color: "#4a0d12", triad: ["Sun Red", "Wine Red", "Carmine"] },
-            "O15": { name: "Carmine", brand: "AK", type: "Layer 2", color: "#9e1b2b" },
-            
-            "P1": { name: "Beast Brown", brand: "AK", type: "Base", color: "#593119", triad: ["Beast Brown", "Russet Shadow", "Afro Shadow"] },
-            "P2": { name: "Russet Shadow", brand: "AK", type: "Layer 1", color: "#42251b" },
-            "P3": { name: "Afro Shadow", brand: "AK", type: "Layer 2", color: "#301d17" },
-            "P4": { name: "Dark Prussian Blue", brand: "AK", type: "Base", color: "#102336", triad: ["Dark Prussian Blue", "Ocean Blue", "Arkhaiak Turquoise"] },
-            "P5": { name: "Ocean Blue", brand: "AK", type: "Layer 1", color: "#195270" },
-            "P6": { name: "Arkhaiak Turquoise", brand: "AK", type: "Layer 2", color: "#1c6869" },
-            "P7": { name: "Amethyst Blue", brand: "AK", type: "Base", color: "#2a2240", triad: ["Amethyst Blue", "Ducat Blue", "Deep Blue"] },
-            "P8": { name: "Ducat Blue", brand: "AK", type: "Layer 1", color: "#25405c" },
-            "P9": { name: "Deep Blue", brand: "AK", type: "Layer 2", color: "#0d2b45" },
-            "P10": { name: "Dark Blue", brand: "AK", type: "Base", color: "#111826", triad: ["Dark Blue", "Imperial Blue", "King Purple"] },
-            "P11": { name: "Imperial Blue", brand: "AK", type: "Layer 1", color: "#1d2a4a" },
-            "P12": { name: "King Purple", brand: "AK", type: "Layer 2", color: "#381c4a" },
-            "P13": { name: "Anthracite Gray", brand: "AK", type: "Base", color: "#272d33", triad: ["Anthracite Gray", "Basalt Gray", "Graphite"] },
-            "P14": { name: "Basalt Gray", brand: "AK", type: "Layer 1", color: "#4f5861" },
-            "P15": { name: "Graphite", brand: "AK", type: "Layer 2", color: "#1c1e21" },
-            
-            "Q1": { name: "White", brand: "AK", type: "Base", color: "#ffffff", triad: ["White", "Silver Gray", "Black"] },
-            "Q2": { name: "Silver Gray", brand: "AK", type: "Layer 1", color: "#b3b9be" },
-            "Q3": { name: "Black", brand: "AK", type: "Layer 2", color: "#0a0a0a" },
-            
-            "R11": { name: "Orruk Flesh", brand: "Citadel", type: "Base", color: "#7fa074", triad: ["Orruk Flesh", "Biel-Tan Green Shade"] },
-            "R12": { name: "Wraithbone", brand: "Citadel", type: "Base", color: "#dbd4c5", triad: ["Wraithbone", "White Scar"] }
-        };
-
-        function renderHexGrid() {
-            const canvas = document.getElementById('canvas-grid');
-            canvas.innerHTML = '';
-
-            for (let r = 1; r <= rowsCount; r++) {
-                const rowObj = document.createElement('div');
-                rowObj.className = 'hex-row';
-
-                cols.forEach(colName => {
-                    const coordStr = `${colName}${r}`;
-                    const cell = document.createElement('div');
-                    cell.className = 'hex-cell';
-                    cell.id = `cell-${coordStr}`;
-
-                    const coordLabel = document.createElement('span');
-                    coordLabel.className = 'hex-coord';
-                    coordLabel.innerText = coordStr;
-                    cell.appendChild(coordLabel);
-
-                    const titleLabel = document.createElement('span');
-                    titleLabel.className = 'hex-title';
-
-                    if (activeWallLayout[coordStr]) {
-                        const activeItem = activeWallLayout[coordStr];
-                        titleLabel.innerText = activeItem.name;
-                        cell.style.backgroundColor = activeItem.color;
-
-                        const bDot = document.createElement('div');
-                        bDot.className = `brand-dot dot-${activeItem.brand === 'Citadel' ? 'citadel' : activeItem.brand === 'AK' ? 'ak' : 'ap'}`;
-                        cell.appendChild(bDot);
-
-                        if(activeItem.color === '#ffffff' || activeItem.color === '#cdcbc2' || activeItem.color === '#dededc' || activeItem.color === '#dbd4c5') {
-                            cell.style.color = '#000';
-                            coordLabel.style.color = 'rgba(0,0,0,0.5)';
-                        }
-                        cell.onclick = () => launchViewPanel(coordStr, activeItem);
-                    } else {
-                        titleLabel.innerText = '';
-                        cell.onclick = () => launchEditPanel(coordStr);
-                    }
-
-                    cell.appendChild(titleLabel);
-                    rowObj.appendChild(cell);
-                });
-                canvas.appendChild(rowObj);
-            }
-            evaluateStatistics();
-        }
-
-        function launchViewPanel(coord, paint) {
-            document.getElementById('edit-panel').style.display = 'none';
-            const panel = document.getElementById('view-panel');
-            panel.style.display = 'block';
-
-            document.getElementById('view-name').innerText = paint.name + ` (${coord})`;
-            document.getElementById('view-meta').innerText = `${paint.brand} · ${paint.type}`;
-            document.getElementById('view-swatch').style.backgroundColor = paint.color;
-
-            const triadBox = document.getElementById('view-triad');
-            triadBox.innerHTML = '';
-            
-            if(paint.triad && paint.triad.length > 1) {
-                paint.triad.forEach((stepName, index) => {
-                    const segment = document.createElement('span');
-                    segment.className = 'triad-step';
-                    if(stepName.toLowerCase() === paint.name.toLowerCase()) {
-                        segment.className = 'triad-step triad-active';
-                    }
-                    segment.innerText = stepName;
-                    triadBox.appendChild(segment);
-                    if(index < paint.triad.length - 1) {
-                        triadBox.innerHTML += ' <span>›</span> ';
-                    }
-                });
-            } else {
-                triadBox.innerHTML = `<span class="triad-step">${paint.triad ? paint.triad[0] : 'Single Layer/Special Formulation'}</span>`;
-            }
-        }
-
-        function launchEditPanel(coord) {
-            document.getElementById('view-panel').style.display = 'none';
-            const panel = document.getElementById('edit-panel');
-            panel.style.display = 'block';
-            
-            selectedCoord = coord;
-            document.getElementById('edit-coords').innerText = `Assign Slot: ${coord}`;
-            document.getElementById('catalogSearch').value = '';
-            selectedPaintFromCatalog = null;
-            updateCatalogDropdown();
-        }
-
-        function filterTab(brand, element) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn');
-            element.className = 'tab-btn tab-active';
-            activeTabBrand = brand;
-            updateCatalogDropdown();
-        }
-
-        function updateCatalogDropdown() {
-            const searchVal = document.getElementById('catalogSearch').value.toLowerCase();
-            const box = document.getElementById('dropdown-box');
-            box.innerHTML = '';
-
-            const filtered = paintCatalog.filter(p => {
-                const matchesBrand = (activeTabBrand === 'All' || p.brand === activeTabBrand);
-                const matchesSearch = p.name.toLowerCase().includes(searchVal);
-                return matchesBrand && matchesSearch;
-            });
-
-            filtered.forEach(p => {
-                const row = document.createElement('div');
-                row.className = 'dropdown-item';
-                row.innerHTML = `<span>${p.name}</span><span style="color:var(--text-dim); font-size:0.7rem;">${p.brand} (${p.type})</span>`;
-                row.onclick = () => {
-                    document.getElementById('catalogSearch').value = p.name;
-                    selectedPaintFromCatalog = p;
-                };
-                box.appendChild(row);
-            });
-        }
-
-        function commitAssignment() {
-            if (!selectedPaintFromCatalog || !selectedCoord) return;
-            activeWallLayout[selectedCoord] = { ...selectedPaintFromCatalog };
-            renderHexGrid();
-            document.getElementById('edit-panel').style.display = 'none';
-        }
-
-        function clearAssignment() {
-            if (!selectedCoord) return;
-            delete activeWallLayout[selectedCoord];
-            renderHexGrid();
-            document.getElementById('edit-panel').style.display = 'none';
-        }
-
-        function runGlobalSearch() {
-            const matchStr = document.getElementById('mainSearch').value.toLowerCase();
-            
-            cols.forEach(col => {
-                for(let r = 1; r <= rowsCount; r++) {
-                    const coord = `${col}${r}`;
-                    const targetCell = document.getElementById(`cell-${coord}`);
-                    if (!targetCell) continue;
-
-                    const activePaint = activeWallLayout[coord];
-
-                    if (matchStr === '') {
-                        targetCell.classList.remove('hex-dimmed');
-                        continue;
-                    }
-
-                    if (activePaint) {
-                        if (activePaint.name.toLowerCase().includes(matchStr) || 
-                            activePaint.brand.toLowerCase().includes(matchStr) || 
-                            activePaint.type.toLowerCase().includes(matchStr)) {
-                            targetCell.classList.remove('hex-dimmed');
-                        } else {
-                            targetCell.classList.add('hex-dimmed');
-                        }
-                    } else {
-                        targetCell.classList.add('hex-dimmed');
-                    }
-                }
-            });
-        }
-
-        function evaluateStatistics() {
-            const calculatedTotal = Object.keys(activeWallLayout).length;
-            const openCapacity = (20 * 16) - calculatedTotal;
-            document.getElementById('stat-total').innerText = `Paints Placed: ${calculatedTotal}`;
-            document.getElementById('stat-empty').innerText = `Empty Slots: ${openCapacity}`;
-        }
-
-        window.onload = renderHexGrid;
-    </script>
-</body>
-</html>
+            { name: "Flash Gitz Yellow", brand: "Citadel", type: "Layer", color: "#fff200", triad: ["Averland Sunset", "Yriel Yellow", "Flash Gitz Yellow"] },
+            { name: "Bugman's Glow", brand: "Citadel", type: "Base", color: "#8
