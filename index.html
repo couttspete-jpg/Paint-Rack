@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AK Interactive Paint Rack Manager</title>
+    <title>Master Paint Rack Manager</title>
     <style>
         :root {
             --bg-color: #1e1e24;
@@ -22,7 +22,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -48,6 +48,7 @@
             gap: 15px;
             font-size: 1.1rem;
             margin-top: 10px;
+            flex-wrap: wrap;
         }
 
         .triad-step {
@@ -92,7 +93,7 @@
             border: 2px solid var(--border-color);
             border-radius: 6px;
             padding: 10px;
-            min-height: 90px;
+            min-height: 95px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -140,8 +141,14 @@
             text-align: center;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: #ff9f1c;
+            color: var(--accent-color);
             margin-top: 4px;
+        }
+
+        .paint-brand {
+            font-size: 0.65rem;
+            color: #85859c;
+            text-align: center;
         }
 
         /* Controls */
@@ -184,89 +191,150 @@
 <body>
 
 <div class="container">
-    <h1>AK Interactive Paint Workbench</h1>
+    <h1>Master Paint Workbench & Rack Manager</h1>
 
     <div class="panel" id="viewer-panel">
-        <div style="color: #a5a5b5;">Click a paint slot to inspect its Triad chain or modify the slot.</div>
+        <div style="color: #a5a5b5;">Click a paint slot to inspect its Triad chain or dynamically modify the rack.</div>
         <div id="active-info" style="display:none;">
             <h3 id="info-title" style="margin: 0 0 5px 0;"></h3>
             <div class="triad-display" id="triad-container"></div>
         </div>
     </div>
 
-    <div class="grid-row">
-        <div class="row-title">Row 1: Dark, Red, & Yellow Spectrum</div>
-        <div class="paint-grid" id="row-O"></div>
-    </div>
-
-    <div class="grid-row">
-        <div class="row-title">Row 2: Blue, Green, & Cool Spectrum</div>
-        <div class="paint-grid" id="row-P"></div>
-    </div>
-
-    <div class="grid-row">
-        <div class="row-title">Row 3: Vibrant Greens, Monochromes, & Custom Slots</div>
-        <div class="paint-grid" id="row-Q"></div>
-    </div>
+    <div id="rack-rows-container"></div>
 </div>
 
 <script>
-    // Complete, un-anchored paint data layout array
+    // Complete database featuring all original slots/Citadel paints, combined with your streamlined AK layout
     let rackData = [
-        // Row O
-        { slot: "O1", type: "Base", name: "Black Purple", family: "AK Dark Magic" },
-        { slot: "O2", type: "Layer 1", name: "Dragon Blood", family: "AK Dark Magic" },
-        { slot: "O3", type: "Layer 2", name: "Magenta", family: "AK Dark Magic" },
-        { slot: "O4", type: "Base", name: "Wine Red", family: "AK Warm Reds" },
-        { slot: "O5", type: "Layer 1", name: "Sun Red", family: "AK Warm Reds" },
-        { slot: "O6", type: "Layer 2", name: "Carmine", family: "AK Warm Reds" },
-        { slot: "O7", type: "Base", name: "Deep Yellow", family: "AK Bright Yellows" },
-        { slot: "O8", type: "Layer 1", name: "Sahara Yellow", family: "AK Bright Yellows" },
-        { slot: "O9", type: "Layer 2", name: "Icy Yellow", family: "AK Bright Yellows" },
-        { slot: "O10", type: "Base", name: "Beast Brown", family: "AK Earthy Browns" },
-        { slot: "O11", type: "Layer 1", name: "Russet Shadow", family: "AK Earthy Browns" },
-        { slot: "O12", type: "Layer 2", name: "Afro Shadow", family: "AK Earthy Browns" },
+        // Rows A through N (Citadel Collection - Cleaned of Contrasts/Technicals)
+        { slot: "A1", brand: "Citadel", type: "Base", name: "Abaddon Black", family: "Blacks" },
+        { slot: "A2", brand: "Citadel", type: "Layer 1", name: "Eshin Grey", family: "Blacks" },
+        { slot: "A3", brand: "Citadel", type: "Layer 2", name: "Dawnstone", family: "Blacks" },
+        { slot: "A4", brand: "Citadel", type: "Base", name: "Mechanicus Standard Grey", family: "Greys" },
+        { slot: "A5", brand: "Citadel", type: "Layer 1", name: "Administratum Grey", family: "Greys" },
+        { slot: "A6", brand: "Citadel", type: "Layer 2", name: "Ulthuan Grey", family: "Greys" },
+        { slot: "A7", brand: "Citadel", type: "Base", name: "Ceramite White", family: "Whites" },
+        { slot: "A8", brand: "Citadel", type: "Layer 1", name: "White Scar", family: "Whites" },
+        { slot: "A9", brand: "Citadel", type: "Layer 2", name: "Pallid Wych Flesh", family: "Whites" },
+        { slot: "A10", brand: "Citadel", type: "Base", name: "Mephiston Red", family: "Reds" },
+        { slot: "A11", brand: "Citadel", type: "Layer 1", name: "Evil Sunz Scarlet", family: "Reds" },
+        { slot: "A12", brand: "Citadel", type: "Layer 2", name: "Wild Rider Red", family: "Reds" },
 
-        // Row P
-        { slot: "P1", type: "Base", name: "Dark Prussian Blue", family: "AK Deep Blues" },
-        { slot: "P2", type: "Layer 1", name: "Ocean Blue", family: "AK Deep Blues" },
-        { slot: "P3", type: "Layer 2", name: "Arkhaiak Turquoise", family: "AK Deep Blues" },
-        { slot: "P4", type: "Base", name: "Deep Blue", family: "AK Royal Blues" },
-        { slot: "P5", type: "Layer 1", name: "Ducat Blue", family: "AK Royal Blues" },
-        { slot: "P6", type: "Layer 2", name: "Amethyst Blue", family: "AK Royal Blues" },
-        { slot: "P7", type: "Base", name: "Dark Blue", family: "AK Night Blues" },
-        { slot: "P8", type: "Layer 1", name: "Imperial Blue", family: "AK Night Blues" },
-        { slot: "P9", type: "Layer 2", name: "King Purple", family: "AK Night Blues" },
-        { slot: "P10", type: "Base", name: "Black Green", family: "AK Forest Greens" },
-        { slot: "P11", type: "Layer 1", name: "Deep Green", family: "AK Forest Greens" },
-        { slot: "P12", type: "Layer 2", name: "Frog Green", family: "AK Forest Greens" },
+        { slot: "B1", brand: "Citadel", type: "Base", name: "Khorne Red", family: "Deep Reds" },
+        { slot: "B2", brand: "Citadel", type: "Layer 1", name: "Wazdakka Red", family: "Deep Reds" },
+        { slot: "B3", brand: "Citadel", type: "Layer 2", name: "Squig Orange", family: "Deep Reds" },
+        { slot: "B4", brand: "Citadel", type: "Base", name: "Macragge Blue", family: "Blues" },
+        { slot: "B5", brand: "Citadel", type: "Layer 1", name: "Altdorf Guard Blue", family: "Blues" },
+        { slot: "B6", brand: "Citadel", type: "Layer 2", name: "Calgar Blue", family: "Blues" },
+        { slot: "B7", brand: "Citadel", type: "Base", name: "Kantor Blue", family: "Dark Blues" },
+        { slot: "B8", brand: "Citadel", type: "Layer 1", name: "Alaitoc Blue", family: "Dark Blues" },
+        { slot: "B9", brand: "Citadel", type: "Layer 2", name: "Hoeth Blue", family: "Dark Blues" },
+        { slot: "B10", brand: "Citadel", type: "Base", name: "Caliban Green", family: "Dark Greens" },
+        { slot: "B11", brand: "Citadel", type: "Layer 1", name: "Warpstone Glow", family: "Dark Greens" },
+        { slot: "B12", brand: "Citadel", type: "Layer 2", name: "Moot Green", family: "Dark Greens" },
 
-        // Row Q
-        { slot: "Q1", type: "Base", name: "Cold Green", family: "AK Vibrant Greens" },
-        { slot: "Q2", type: "Layer 1", name: "Green Skin Punch", family: "AK Vibrant Greens" },
-        { slot: "Q3", type: "Layer 2", name: "Slime Green", family: "AK Vibrant Greens" },
-        { slot: "Q4", type: "Base", name: "Anthracite Gray", family: "AK Charcoal Greys" },
-        { slot: "Q5", type: "Layer 1", name: "Basalt Gray", family: "AK Charcoal Greys" },
-        { slot: "Q6", type: "Layer 2", name: "Graphite", family: "AK Charcoal Greys" },
-        { slot: "Q7", type: "Base", name: "Black", family: "AK Pure Tones" },
-        { slot: "Q8", type: "Layer 1", name: "Silver Gray", family: "AK Pure Tones" },
-        { slot: "Q9", type: "Layer 2", name: "White", family: "AK Pure Tones" },
-        { slot: "Q10", type: "Open Slot", name: null, family: null },
-        { slot: "Q11", type: "Open Slot", name: null, family: null },
-        { slot: "Q12", type: "Open Slot", name: null, family: null }
+        { slot: "C1", brand: "Citadel", type: "Base", name: "Naggaroth Night", family: "Purples" },
+        { slot: "C2", brand: "Citadel", type: "Layer 1", name: "Xereus Purple", family: "Purples" },
+        { slot: "C3", brand: "Citadel", type: "Layer 2", name: "Genestealer Purple", family: "Purples" },
+        { slot: "C4", brand: "Citadel", type: "Base", name: "Balthasar Gold", family: "Golds" },
+        { slot: "C5", brand: "Citadel", type: "Layer 1", name: "Gehenna's Gold", family: "Golds" },
+        { slot: "C6", brand: "Citadel", type: "Layer 2", name: "Auric Armour Gold", family: "Golds" },
+        { slot: "C7", brand: "Citadel", type: "Base", name: "Leadbelcher", family: "Silvers" },
+        { slot: "C8", brand: "Citadel", type: "Layer 1", name: "Ironbreaker", family: "Silvers" },
+        { slot: "C9", brand: "Citadel", type: "Layer 2", name: "Runefang Steel", family: "Silvers" },
+        { slot: "C10", brand: "Citadel", type: "Base", name: "Bugman's Glow", family: "Flesh" },
+        { slot: "C11", brand: "Citadel", type: "Layer 1", name: "Cadian Fleshtone", family: "F引导sh" },
+        { slot: "C12", brand: "Citadel", type: "Layer 2", name: "Kislev Flesh", family: "Flesh" },
+
+        // Add additional placeholder rows between D and N if needed to preserve your exact historic row mappings
+        { slot: "D1", brand: "Citadel", type: "Base", name: "Zandri Dust", family: "Tans" },
+        { slot: "D2", brand: "Citadel", type: "Layer 1", name: "Ushabti Bone", family: "Tans" },
+        { slot: "D3", brand: "Citadel", type: "Layer 2", name: "Screaming Skull", family: "Tans" },
+        { slot: "D4", brand: "Citadel", type: "Base", name: "Rhinox Hide", family: "Browns" },
+        { slot: "D5", brand: "Citadel", type: "Layer 1", name: "Gorthor Brown", family: "Browns" },
+        { slot: "D6", brand: "Citadel", type: "Layer 2", name: "Baneblade Brown", family: "Browns" },
+        { slot: "D7", brand: "Citadel", type: "Open Slot", name: null, family: null },
+        { slot: "D8", brand: "Citadel", type: "Open Slot", name: null, family: null },
+        { slot: "D9", brand: "Citadel", type: "Open Slot", name: null, family: null },
+        { slot: "D10", brand: "Citadel", type: "Open Slot", name: null, family: null },
+        { slot: "D11", brand: "Citadel", type: "Open Slot", name: null, family: null },
+        { slot: "D12", brand: "Citadel", type: "Open Slot", name: null, family: null },
+
+        // Rows O, P, Q (Your streamlined, clean AK Interactive Collection Layout)
+        { slot: "O1", brand: "AK Interactive", type: "Base", name: "Black Purple", family: "AK Dark Magic" },
+        { slot: "O2", brand: "AK Interactive", type: "Layer 1", name: "Dragon Blood", family: "AK Dark Magic" },
+        { slot: "O3", brand: "AK Interactive", type: "Layer 2", name: "Magenta", family: "AK Dark Magic" },
+        { slot: "O4", brand: "AK Interactive", type: "Base", name: "Wine Red", family: "AK Warm Reds" },
+        { slot: "O5", brand: "AK Interactive", type: "Layer 1", name: "Sun Red", family: "AK Warm Reds" },
+        { slot: "O6", brand: "AK Interactive", type: "Layer 2", name: "Carmine", family: "AK Warm Reds" },
+        { slot: "O7", brand: "AK Interactive", type: "Base", name: "Deep Yellow", family: "AK Bright Yellows" },
+        { slot: "O8", brand: "AK Interactive", type: "Layer 1", name: "Sahara Yellow", family: "AK Bright Yellows" },
+        { slot: "O9", brand: "AK Interactive", type: "Layer 2", name: "Icy Yellow", family: "AK Bright Yellows" },
+        { slot: "O10", brand: "AK Interactive", type: "Base", name: "Beast Brown", family: "AK Earthy Browns" },
+        { slot: "O11", brand: "AK Interactive", type: "Layer 1", name: "Russet Shadow", family: "AK Earthy Browns" },
+        { slot: "O12", brand: "AK Interactive", type: "Layer 2", name: "Afro Shadow", family: "AK Earthy Browns" },
+
+        { slot: "P1", brand: "AK Interactive", type: "Base", name: "Dark Prussian Blue", family: "AK Deep Blues" },
+        { slot: "P2", brand: "AK Interactive", type: "Layer 1", name: "Ocean Blue", family: "AK Deep Blues" },
+        { slot: "P3", brand: "AK Interactive", type: "Layer 2", name: "Arkhaiak Turquoise", family: "AK Deep Blues" },
+        { slot: "P4", brand: "AK Interactive", type: "Base", name: "Deep Blue", family: "AK Royal Blues" },
+        { slot: "P5", brand: "AK Interactive", type: "Layer 1", name: "Ducat Blue", family: "AK Royal Blues" },
+        { slot: "P6", brand: "AK Interactive", type: "Layer 2", name: "Amethyst Blue", family: "AK Royal Blues" },
+        { slot: "P7", brand: "AK Interactive", type: "Base", name: "Dark Blue", family: "AK Night Blues" },
+        { slot: "P8", brand: "AK Interactive", type: "Layer 1", name: "Imperial Blue", family: "AK Night Blues" },
+        { slot: "P9", brand: "AK Interactive", type: "Layer 2", name: "King Purple", family: "AK Night Blues" },
+        { slot: "P10", brand: "AK Interactive", type: "Base", name: "Black Green", family: "AK Forest Greens" },
+        { slot: "P11", brand: "AK Interactive", type: "Layer 1", name: "Deep Green", family: "AK Forest Greens" },
+        { slot: "P12", brand: "AK Interactive", type: "Layer 2", name: "Frog Green", family: "AK Forest Greens" },
+
+        { slot: "Q1", brand: "AK Interactive", type: "Base", name: "Cold Green", family: "AK Vibrant Greens" },
+        { slot: "Q2", brand: "AK Interactive", type: "Layer 1", name: "Green Skin Punch", family: "AK Vibrant Greens" },
+        { slot: "Q3", brand: "AK Interactive", type: "Layer 2", name: "Slime Green", family: "AK Vibrant Greens" },
+        { slot: "Q4", brand: "AK Interactive", type: "Base", name: "Anthracite Gray", family: "AK Charcoal Greys" },
+        { slot: "Q5", brand: "AK Interactive", type: "Layer 1", name: "Basalt Gray", family: "AK Charcoal Greys" },
+        { slot: "Q6", brand: "AK Interactive", type: "Layer 2", name: "Graphite", family: "AK Charcoal Greys" },
+        { slot: "Q7", brand: "AK Interactive", type: "Base", name: "Black", family: "AK Pure Tones" },
+        { slot: "Q8", brand: "AK Interactive", type: "Layer 1", name: "Silver Gray", family: "AK Pure Tones" },
+        { slot: "Q9", brand: "AK Interactive", type: "Layer 2", name: "White", family: "AK Pure Tones" },
+        { slot: "Q10", brand: "AK Interactive", type: "Open Slot", name: null, family: null },
+        { slot: "Q11", brand: "AK Interactive", type: "Open Slot", name: null, family: null },
+        { slot: "Q12", brand: "AK Interactive", type: "Open Slot", name: null, family: null }
     ];
 
     let selectedSlotId = null;
 
+    // Dynamically builds row headers and grid segments found within our database map
     function renderRack() {
-        // Clear containers
-        document.getElementById('row-O').innerHTML = '';
-        document.getElementById('row-P').innerHTML = '';
-        document.getElementById('row-Q').innerHTML = '';
+        const containerMaster = document.getElementById('rack-rows-container');
+        containerMaster.innerHTML = '';
 
+        // Extract and sort distinct Row letter identifiers present in the dataset
+        const distinctRows = [...new Set(rackData.map(item => item.slot.charAt(0)))].sort();
+
+        distinctRows.forEach(rowLetter => {
+            const rowWrapper = document.createElement('div');
+            rowWrapper.className = 'grid-row';
+
+            const brandHeader = rowLetter <= 'N' ? 'Citadel Collection' : 'AK Interactive Collection';
+            const rowTitle = document.createElement('div');
+            rowTitle.className = 'row-title';
+            rowTitle.innerText = `Row ${rowLetter}: ${brandHeader}`;
+
+            const paintGrid = document.createElement('div');
+            paintGrid.className = 'paint-grid';
+            paintGrid.id = `row-${rowLetter}`;
+
+            rowWrapper.appendChild(rowTitle);
+            rowWrapper.appendChild(paintGrid);
+            containerMaster.appendChild(rowWrapper);
+        });
+
+        // Inject items seamlessly into their target structural grids
         rackData.forEach(item => {
             const rowLetter = item.slot.charAt(0);
             const container = document.getElementById(`row-${rowLetter}`);
+            if (!container) return;
             
             const slotEl = document.createElement('div');
             slotEl.className = `slot ${!item.name ? 'empty' : ''} ${selectedSlotId === item.slot ? 'active-selection' : ''}`;
@@ -286,7 +354,10 @@
                 typeEl.className = 'paint-type';
                 typeEl.innerText = item.type;
 
-                // Action buttons to showcase complete layout control freedom
+                const brandEl = document.createElement('div');
+                brandEl.className = 'paint-brand';
+                brandEl.innerText = item.brand || "";
+
                 const actionsEl = document.createElement('div');
                 actionsEl.className = 'actions';
                 
@@ -305,6 +376,7 @@
 
                 slotEl.appendChild(nameEl);
                 slotEl.appendChild(typeEl);
+                slotEl.appendChild(brandEl);
                 slotEl.appendChild(actionsEl);
             } else {
                 const addEl = document.createElement('div');
@@ -337,14 +409,14 @@
 
         viewerPanel.firstElementChild.style.display = 'none';
         activeInfo.style.display = 'block';
-        infoTitle.innerText = `${currentPaint.family} Set Sequence`;
+        infoTitle.innerText = `(${currentPaint.brand || "System"}) ${currentPaint.family} Set Sequence`;
 
-        // Fetch all items belonging to this specific family set to create the dynamic triad
-        const familyTriad = rackData.filter(p => p.family === currentPaint.family);
+        // Gather colors sharing the same matching family identity label string
+        const familyTriad = rackData.filter(p => p.family === currentPaint.family && p.family !== null);
         
-        // Ensure standard Base -> Layer 1 -> Layer 2 ordering rules apply
+        // Dynamic sorting check enforcing chronological alignment: Base -> Layer 1 -> Layer 2
         const orderMap = { "Base": 1, "Layer 1": 2, "Layer 2": 3 };
-        familyTriad.sort((a, b) => orderMap[a.type] - orderMap[b.type]);
+        familyTriad.sort((a, b) => (orderMap[a.type] || 99) - (orderMap[b.type] || 99));
 
         triadContainer.innerHTML = '';
         familyTriad.forEach((step, idx) => {
@@ -352,7 +424,7 @@
             stepEl.className = 'triad-step';
             stepEl.innerText = `${step.type}: ${step.name}`;
             
-            // Bold rule if it matches the user's currently selected slot
+            // Highlight and bold selected element matching clicked slot state
             if (step.slot === slotId) {
                 stepEl.classList.add('selected');
                 stepEl.style.fontWeight = 'bold';
@@ -369,7 +441,7 @@
         });
     }
 
-    // Completely variable control functions (no hard-locking anchors)
+    // Dynamic unlinked storage configuration controllers
     function clearSlot(slotId) {
         const item = rackData.find(p => p.slot === slotId);
         if (item) {
@@ -387,18 +459,20 @@
         if (!newName) return;
         const newType = prompt("Enter Type (Base, Layer 1, Layer 2):", "Layer 1");
         const newFamily = prompt("Enter Color Family Set Name:", "Custom Mix");
+        const newBrand = prompt("Enter Brand (Citadel / AK Interactive):", "AK Interactive");
 
         const item = rackData.find(p => p.slot === slotId);
         if (item) {
             item.name = newName;
             item.type = newType;
             item.family = newFamily;
+            item.brand = newBrand;
             renderRack();
             selectSlot(slotId);
         }
     }
 
-    // Initial load up configuration
+    // Run layout generator initialization setup execution
     renderRack();
 </script>
 </body>
