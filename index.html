@@ -2,1106 +2,404 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Paint Rack Tracker Ultra</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AK Interactive Paint Rack Manager</title>
     <style>
         :root {
-            --bg-dark: #121214;
-            --panel-bg: #1a1a1e;
-            --border-color: #2c2c35;
-            --text-main: #e1e1e6;
-            --text-dim: #8f8f9d;
-            --accent: #6200ee;
-            --hex-w: 54px;
-            --hex-h: 62px;
+            --bg-color: #1e1e24;
+            --card-bg: #2a2a35;
+            --accent-color: #ff9f1c;
+            --text-color: #f4f4f9;
+            --border-color: #3f3f52;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow: hidden;
-            height: 100vh;
-            box-sizing: border-box;
+            padding: 20px;
         }
 
-        .header-container {
-            width: 100%;
-            max-width: 600px;
-            background-color: var(--bg-dark);
-            padding: 5px 0 10px 0;
-            z-index: 50;
-            flex-shrink: 0;
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .search-bar {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background-color: var(--panel-bg);
-            color: var(--text-main);
-            font-size: 1rem;
-            box-sizing: border-box;
-            margin-bottom: 8px;
-        }
-
-        .stats-bar {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            background: var(--panel-bg);
-            padding: 6px 12px;
-            border-radius: 6px;
-        }
-
-        .grid-viewport {
-            width: 100vw;
-            flex-grow: 1;
-            overflow: hidden; 
-            position: relative;
-            background: #0f0f11;
-            border-radius: 12px;
-            touch-action: none;
-        }
-
-        .grid-canvas {
-            padding: 60px;
-            background: #16161a;
-            position: absolute;
-            top: 0;
-            left: 0;
-            transform-origin: 0 0;
-            will-change: transform;
-            cursor: grab;
-        }
-
-        .grid-canvas:active { cursor: grabbing; }
-
-        .hex-row {
-            display: flex;
-            margin-bottom: -16px; 
-        }
-
-        .hex-row:nth-child(odd) {
-            margin-left: 29px;
-        }
-
-        .hex-cell {
-            width: var(--hex-w);
-            height: var(--hex-h);
-            background-color: #24242b;
-            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-            margin-right: 4px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.65rem;
-            cursor: pointer;
-            position: relative;
-            transition: opacity 0.2s ease;
-            user-select: none;
-        }
-
-        .hex-coord {
-            font-weight: bold;
-            color: rgba(255, 255, 255, 0.3);
-            margin-bottom: 1px;
-            font-size: 0.55rem;
-        }
-
-        .hex-title {
-            font-size: 0.5rem;
+        h1 {
             text-align: center;
-            width: 85%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: #fff;
-            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 30px;
         }
 
-        .brand-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            position: absolute;
-            bottom: 8px;
-        }
-        .dot-citadel { background-color: #ffd700; }
-        .dot-ak { background-color: #00ff66; }
-        .dot-ap { background-color: #ff007f; }
-
-        .hex-dimmed { opacity: 0.15 !important; }
-
+        /* Info & Triad Panel */
         .panel {
-            width: 100%;
-            max-width: 600px;
-            background-color: var(--panel-bg);
-            border-radius: 12px 12px 0 0;
+            background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            padding: 15px;
-            box-sizing: border-box;
-            display: none;
-            position: fixed;
-            bottom: 0;
-            z-index: 100;
-            box-shadow: 0 -5px 25px rgba(0,0,0,0.5);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            min-height: 80px;
         }
 
-        .swatch-display {
-            width: 100%;
-            height: 35px;
-            border-radius: 6px;
-            margin: 10px 0;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .triad-flow-container {
-            background: #121214;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            line-height: 1.4;
-            margin-top: 8px;
-        }
-
-        .triad-step { color: var(--text-dim); }
-        .triad-active { color: #fff !important; font-weight: bold; text-decoration: underline; }
-
-        .brand-tabs {
+        .triad-display {
             display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.1rem;
+            margin-top: 10px;
         }
 
-        .tab-btn {
-            flex: 1;
-            background: #25252c;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 8px;
+        .triad-step {
+            padding: 8px 16px;
+            background: #353545;
             border-radius: 4px;
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-
-        .tab-active { background: var(--accent); font-weight: bold; }
-
-        .catalog-search-input {
-            width: 100%;
-            padding: 10px;
-            background: #121214;
             border: 1px solid var(--border-color);
-            color: white;
-            border-radius: 6px;
-            box-sizing: border-box;
+        }
+
+        .triad-step.selected {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .arrow {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        /* Grid Layout */
+        .grid-row {
+            margin-bottom: 25px;
+        }
+
+        .row-title {
+            font-size: 1.2rem;
             margin-bottom: 10px;
+            color: #a5a5b5;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 5px;
         }
 
-        .dropdown-list {
-            max-height: 120px;
-            overflow-y: auto;
-            background: #121214;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 10px;
-        }
-
-        .dropdown-item {
-            padding: 10px;
-            font-size: 0.85rem;
-            border-bottom: 1px solid #1a1a1e;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .action-row {
-            display: flex;
+        .paint-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
             gap: 10px;
         }
 
-        .btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
+        /* Paint Slots */
+        .slot {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
             border-radius: 6px;
+            padding: 10px;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .slot:hover {
+            border-color: #55556d;
+            transform: translateY(-2px);
+        }
+
+        .slot.active-selection {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 8px rgba(255, 159, 28, 0.3);
+        }
+
+        .slot.empty {
+            border-style: dashed;
+            background-color: transparent;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slot-id {
+            font-size: 0.75rem;
+            color: #75758c;
             font-weight: bold;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+        }
+
+        .paint-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 15px;
+            text-align: center;
+            word-wrap: break-word;
+        }
+
+        .paint-type {
+            font-size: 0.7rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #ff9f1c;
+            margin-top: 4px;
+        }
+
+        /* Controls */
+        .actions {
+            margin-top: 8px;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .slot:hover .actions {
+            opacity: 1;
+        }
+
+        .btn {
+            background: #4e4e64;
+            border: none;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7rem;
             cursor: pointer;
         }
-        .btn-save { background: #00cc66; color: #fff; }
-        .btn-clear { background: #cc3333; color: #fff; }
-        .close-panel-x {
-            float: right;
-            cursor: pointer;
-            color: var(--text-dim);
-            font-weight: bold;
+
+        .btn:hover {
+            background: var(--accent-color);
+        }
+
+        .btn-delete {
+            background: #d90429;
+        }
+
+        .btn-delete:hover {
+            background: #ef233c;
         }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <input type="text" id="mainSearch" class="search-bar" placeholder="Search paint, group, range, or coordinate..." oninput="runGlobalSearch()">
-        <div class="stats-bar">
-            <span id="stat-total">Paints Placed: 0</span>
-            <span id="stat-empty">Empty Slots: 320</span>
+<div class="container">
+    <h1>AK Interactive Paint Workbench</h1>
+
+    <div class="panel" id="viewer-panel">
+        <div style="color: #a5a5b5;">Click a paint slot to inspect its Triad chain or modify the slot.</div>
+        <div id="active-info" style="display:none;">
+            <h3 id="info-title" style="margin: 0 0 5px 0;"></h3>
+            <div class="triad-display" id="triad-container"></div>
         </div>
     </div>
 
-    <div class="grid-viewport" id="viewport">
-        <div class="grid-canvas" id="canvas-grid"></div>
+    <div class="grid-row">
+        <div class="row-title">Row 1: Dark, Red, & Yellow Spectrum</div>
+        <div class="paint-grid" id="row-O"></div>
     </div>
 
-    <div id="view-panel" class="panel">
-        <span class="close-panel-x" onclick="closePanels()">✕</span>
-        <h3 id="view-name" style="margin:0;">Paint Name</h3>
-        <span id="view-meta" style="font-size:0.8rem; color:var(--text-dim);">Brand · Type</span>
-        <div id="view-swatch" class="swatch-display"></div>
-        <div class="triad-flow-container">
-            <strong>Grouping Classification:</strong><br>
-            <div id="view-triad" style="margin-top:5px;"></div>
-        </div>
+    <div class="grid-row">
+        <div class="row-title">Row 2: Blue, Green, & Cool Spectrum</div>
+        <div class="paint-grid" id="row-P"></div>
     </div>
 
-    <div id="edit-panel" class="panel">
-        <span class="close-panel-x" onclick="closePanels()">✕</span>
-        <h3 id="edit-coords" style="margin:0 0 10px 0;">Assign Slot</h3>
-        <div class="brand-tabs">
-            <button class="tab-btn tab-active" onclick="filterTab('All', this)">All</button>
-            <button class="tab-btn" onclick="filterTab('Citadel', this)">Citadel</button>
-            <button class="tab-btn" onclick="filterTab('AK', this)">AK</button>
-            <button class="tab-btn" onclick="filterTab('Army Painter', this)">AP</button>
-        </div>
-        <input type="text" id="catalogSearch" class="catalog-search-input" placeholder="Search comprehensive color index..." oninput="updateCatalogDropdown()">
-        <div class="dropdown-list" id="dropdown-box"></div>
-        <div class="action-row">
-            <button class="btn btn-save" onclick="commitAssignment()">Save Paint</button>
-            <button class="btn btn-clear" onclick="clearAssignment()">Vacate Slot</button>
-        </div>
+    <div class="grid-row">
+        <div class="row-title">Row 3: Vibrant Greens, Monochromes, & Custom Slots</div>
+        <div class="paint-grid" id="row-Q"></div>
     </div>
+</div>
 
-    <script>
-        const cols = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T'];
-        const rowsCount = 16;
-        let selectedCoord = null;
-        let selectedPaintFromCatalog = null;
-        let activeTabBrand = 'All';
+<script>
+    // Complete, un-anchored paint data layout array
+    let rackData = [
+        // Row O
+        { slot: "O1", type: "Base", name: "Black Purple", family: "AK Dark Magic" },
+        { slot: "O2", type: "Layer 1", name: "Dragon Blood", family: "AK Dark Magic" },
+        { slot: "O3", type: "Layer 2", name: "Magenta", family: "AK Dark Magic" },
+        { slot: "O4", type: "Base", name: "Wine Red", family: "AK Warm Reds" },
+        { slot: "O5", type: "Layer 1", name: "Sun Red", family: "AK Warm Reds" },
+        { slot: "O6", type: "Layer 2", name: "Carmine", family: "AK Warm Reds" },
+        { slot: "O7", type: "Base", name: "Deep Yellow", family: "AK Bright Yellows" },
+        { slot: "O8", type: "Layer 1", name: "Sahara Yellow", family: "AK Bright Yellows" },
+        { slot: "O9", type: "Layer 2", name: "Icy Yellow", family: "AK Bright Yellows" },
+        { slot: "O10", type: "Base", name: "Beast Brown", family: "AK Earthy Browns" },
+        { slot: "O11", type: "Layer 1", name: "Russet Shadow", family: "AK Earthy Browns" },
+        { slot: "O12", type: "Layer 2", name: "Afro Shadow", family: "AK Earthy Browns" },
 
-        // Master Database Catalog
-        const paintCatalog = [
-            { name: "Mephiston Red", brand: "Citadel", type: "Base", color: "#9a1115", group: "Reds (Classic)" },
-            { name: "Evil Sunz Scarlet", brand: "Citadel", type: "Layer 1", color: "#c01413", group: "Reds (Classic)" },
-            { name: "Wild Rider Red", brand: "Citadel", type: "Layer 2", color: "#e82e1b", group: "Reds (Classic)" },
-            { name: "Khorne Red", brand: "Citadel", type: "Base", color: "#6a0005", group: "Reds (Dark)" },
-            { name: "Wazdakka Red", brand: "Citadel", type: "Layer 1", color: "#880c1e", group: "Reds (Dark)" },
-            { name: "Squig Orange", brand: "Citadel", type: "Layer 2", color: "#a74d36", group: "Reds (Dark)" },
-            { name: "Screamer Pink", brand: "Citadel", type: "Base", color: "#7c1645", group: "Pinks / Magentas" },
-            { name: "Pink Horror", brand: "Citadel", type: "Layer 1", color: "#9c3667", group: "Pinks / Magentas" },
-            { name: "Emperor's Children", brand: "Citadel", type: "Layer 2", color: "#b94689", group: "Pinks / Magentas" },
-            { name: "Barak-Nar Burgundy", brand: "Citadel", type: "Base", color: "#45162b", group: "Deep Burgundies" },
-            { name: "Changeling Pink", brand: "Citadel", type: "Layer 2", color: "#da96b5", group: "Deep Burgundies" },
-            { name: "Gal Vorbak Red", brand: "Citadel", type: "Base", color: "#4a121a", group: "Daemon Reds" },
-            { name: "Word Bearers Red", brand: "Citadel", type: "Layer 1", color: "#622521", group: "Daemon Reds" },
-            { name: "Carroburg Crimson", brand: "Citadel", type: "Shade/Wash", color: "#491014", group: "Utility (Red Wash)" },
-            { name: "Macragge Blue", brand: "Citadel", type: "Base", color: "#0d407f", group: "Blues (Ultramarines)" },
-            { name: "Altdorf Guard Blue", brand: "Citadel", type: "Layer 1", color: "#1d559d", group: "Blues (Ultramarines)" },
-            { name: "Calgar Blue", brand: "Citadel", type: "Layer 2", color: "#3d7dbd", group: "Blues (Ultramarines)" },
-            { name: "Kantor Blue", brand: "Citadel", type: "Base", color: "#021f46", group: "Blues (Dark Crimson)" },
-            { name: "Alaitoc Blue", brand: "Citadel", type: "Layer 1", color: "#254a76", group: "Blues (Dark Crimson)" },
-            { name: "Hoeth Blue", brand: "Citadel", type: "Layer 2", color: "#4c78a4", group: "Blues (Dark Crimson)" },
-            { name: "Caledor Sky", brand: "Citadel", type: "Base", color: "#1d65a6", group: "Blues (Bright)" },
-            { name: "Teclis Blue", brand: "Citadel", type: "Layer 1", color: "#3282c4", group: "Blues (Bright)" },
-            { name: "Lothern Blue", brand: "Citadel", type: "Layer 2", color: "#54aedd", group: "Blues (Bright)" },
-            { name: "Thousand Sons Blue", brand: "Citadel", type: "Base", color: "#135467", group: "Teals / Tzeentch" },
-            { name: "Ahriman Blue", brand: "Citadel", type: "Layer 1", color: "#1f758a", group: "Teals / Tzeentch" },
-            { name: "Temple Guard Blue", brand: "Citadel", type: "Layer 2", color: "#3fa4b6", group: "Teals / Tzeentch" },
-            { name: "The Fang", brand: "Citadel", type: "Base", color: "#405465", group: "Space Wolf Grey-Blues" },
-            { name: "Russ Grey", brand: "Citadel", type: "Layer 1", color: "#52677d", group: "Space Wolf Grey-Blues" },
-            { name: "Fenrisian Grey", brand: "Citadel", type: "Layer 2", color: "#7292a6", group: "Space Wolf Grey-Blues" },
-            { name: "Drakenhof Nightshade", brand: "Citadel", type: "Shade/Wash", color: "#111f33", group: "Utility (Blue Wash)" },
-            { name: "Caliban Green", brand: "Citadel", type: "Base", color: "#0a3d21", group: "Greens (Dark/Angels)" },
-            { name: "Warpstone Glow", brand: "Citadel", type: "Layer 1", color: "#137438", group: "Greens (Dark/Angels)" },
-            { name: "Moot Green", brand: "Citadel", type: "Layer 2", color: "#3da224", group: "Greens (Dark/Angels)" },
-            { name: "Waaagh! Flesh", brand: "Citadel", type: "Base", color: "#1a422b", group: "Greens (Ork skin)" },
-            { name: "Warboss Green", brand: "Citadel", type: "Layer 1", color: "#326c45", group: "Greens (Ork skin)" },
-            { name: "Skarsnik Green", brand: "Citadel", type: "Layer 2", color: "#598a5d", group: "Greens (Ork skin)" },
-            { name: "Castellan Green", brand: "Citadel", type: "Base", color: "#2b331f", group: "Greens (Military)" },
-            { name: "Loren Forest", brand: "Citadel", type: "Layer 1", color: "#4a5838", group: "Greens (Military)" },
-            { name: "Straken Green", brand: "Citadel", type: "Layer 2", color: "#608945", group: "Greens (Military)" },
-            { name: "Death World Forest", brand: "Citadel", type: "Base", color: "#545838", group: "Greens (Death/Nurgle)" },
-            { name: "Ogryn Camo", brand: "Citadel", type: "Layer 1", color: "#838a53", group: "Greens (Death/Nurgle)" },
-            { name: "Krieg Khaki", brand: "Citadel", type: "Layer 2", color: "#aab07d", group: "Greens (Death/Nurgle)" },
-            { name: "Vulkan Green", brand: "Citadel", type: "Base", color: "#223c2a", group: "Greens (Salamanders)" },
-            { name: "Nurgling Green", brand: "Citadel", type: "Layer 2", color: "#7e9a6b", group: "Greens (Salamanders)" },
-            { name: "Biel-Tan Green", brand: "Citadel", type: "Shade/Wash", color: "#11381e", group: "Utility (Green Wash)" },
-            { name: "Naggaroth Night", brand: "Citadel", type: "Base", color: "#3b1442", group: "Purples (Dark)" },
-            { name: "Xereus Purple", brand: "Citadel", type: "Layer 1", color: "#47125a", group: "Purples (Dark)" },
-            { name: "Genestealer Purple", brand: "Citadel", type: "Layer 2", color: "#764094", group: "Purples (Dark)" },
-            { name: "Daemonette Hide", brand: "Citadel", type: "Base", color: "#605465", group: "Purples (Slaanesh)" },
-            { name: "Warpfiend Grey", brand: "Citadel", type: "Layer 1", color: "#696575", group: "Purples (Slaanesh)" },
-            { name: "Slaanesh Grey", brand: "Citadel", type: "Layer 2", color: "#827d8e", group: "Purples (Slaanesh)" },
-            { name: "Incubi Darkness", brand: "Citadel", type: "Base", color: "#0b2e33", group: "Sea Greens / Dark Eldar" },
-            { name: "Kabalite Green", brand: "Citadel", type: "Layer 1", color: "#005a52", group: "Sea Greens / Dark Eldar" },
-            { name: "Sybarite Green", brand: "Citadel", type: "Layer 2", color: "#178973", group: "Sea Greens / Dark Eldar" },
-            { name: "Stegadon Scale Green", brand: "Citadel", type: "Base", color: "#064253", group: "Deep Sea Blue" },
-            { name: "Sotek Green", brand: "Citadel", type: "Layer 1", color: "#0b697f", group: "Deep Sea Blue" },
-            { name: "Lucius Lilac", brand: "Citadel", type: "Base", color: "#a48ba7", group: "Muted Purples" },
-            { name: "Kakophoni Purple", brand: "Citadel", type: "Layer 1", color: "#876587", group: "Muted Purples" },
-            { name: "Dechala Lilac", brand: "Citadel", type: "Layer 2", color: "#c3aec3", group: "Muted Purples" },
-            { name: "Druchii Violet", brand: "Citadel", type: "Shade/Wash", color: "#381442", group: "Utility (Purple Wash)" },
-            { name: "Averland Sunset", brand: "Citadel", type: "Base", color: "#fbb81c", group: "Yellows (Warm)" },
-            { name: "Yriel Yellow", brand: "Citadel", type: "Layer 1", color: "#ffd900", group: "Yellows (Warm)" },
-            { name: "Flash Gitz Yellow", brand: "Citadel", type: "Layer 2", color: "#fff200", group: "Yellows (Warm)" },
-            { name: "Jokaero Orange", brand: "Citadel", type: "Base", color: "#c65925", group: "Oranges" },
-            { name: "Troll Slayer Orange", brand: "Citadel", type: "Layer 1", color: "#f16522", group: "Oranges" },
-            { name: "Fire Dragon Bright", brand: "Citadel", type: "Layer 2", color: "#f58232", group: "Oranges" },
-            { name: "Morghast Bone", brand: "Citadel", type: "Base", color: "#c6b38a", group: "Warm Bones" },
-            { name: "Screaming Skull", brand: "Citadel", type: "Layer 1", color: "#dbd3b2", group: "Warm Bones" },
-            { name: "White Scar", brand: "Citadel", type: "Layer 2", color: "#ffffff", group: "Warm Bones" },
-            { name: "Zandri Dust", brand: "Citadel", type: "Base", color: "#9da37d", group: "Khaki Bones" },
-            { name: "Ushabti Bone", brand: "Citadel", type: "Layer 1", color: "#bcbb93", group: "Khaki Bones" },
-            { name: "Ionrach Flesh", brand: "Citadel", type: "Base", color: "#9fa496", group: "Deep Sea Flesh" },
-            { name: "Deepkin Flesh", brand: "Citadel", type: "Layer 1", color: "#cbd4c5", group: "Deep Sea Flesh" },
-            { name: "Casandora Yellow", brand: "Citadel", type: "Shade/Wash", color: "#e39a1c", group: "Utility (Yellow Wash)" },
-            { name: "Bugman's Glow", brand: "Citadel", type: "Base", color: "#804e40", group: "Flesh Tones (Cadian)" },
-            { name: "Cadian Fleshtone", brand: "Citadel", type: "Layer 1", color: "#c58b70", group: "Flesh Tones (Cadian)" },
-            { name: "Kislev Flesh", brand: "Citadel", type: "Layer 2", color: "#d1a581", group: "Flesh Tones (Cadian)" },
-            { name: "Ratskin Flesh", brand: "Citadel", type: "Base", color: "#a8654a", group: "Flesh Tones (Warm)" },
-            { name: "Bestigor Flesh", brand: "Citadel", type: "Layer 1", color: "#d18959", group: "Flesh Tones (Warm)" },
-            { name: "Ungor Flesh", brand: "Citadel", type: "Layer 2", color: "#e3bc8e", group: "Flesh Tones (Warm)" },
-            { name: "Catachan Flesh", brand: "Citadel", type: "Base", color: "#4a2e25", group: "Flesh Tones (Dark)" },
-            { name: "Bloodreaver Flesh", brand: "Citadel", type: "Layer 1", color: "#6a4032", group: "Flesh Tones (Dark)" },
-            { name: "Knight-Questor Flesh", brand: "Citadel", type: "Layer 2", color: "#94654e", group: "Flesh Tones (Dark)" },
-            { name: "Rakarth Flesh", brand: "Citadel", type: "Base", color: "#9c948e", group: "Flesh Tones (Pale/Dead)" },
-            { name: "Flayed One Flesh", brand: "Citadel", type: "Layer 1", color: "#cdbaaf", group: "Flesh Tones (Pale/Dead)" },
-            { name: "Pallid Wych Flesh", brand: "Citadel", type: "Layer 2", color: "#cdccc4", group: "Flesh Tones (Pale/Dead)" },
-            { name: "Night Lords Blue", brand: "Citadel", type: "Base", color: "#001b3a", group: "Midnight Blues" },
-            { name: "Chronus Blue", brand: "Citadel", type: "Layer 2", color: "#6fa1d1", group: "Midnight Blues" },
-            { name: "Reikland Fleshshade", brand: "Citadel", type: "Shade/Wash", color: "#7c3c25", group: "Utility (Flesh Wash)" },
-            { name: "Mournfang Brown", brand: "Citadel", type: "Base", color: "#5c2e16", group: "Browns (Leather)" },
-            { name: "Skrag Brown", brand: "Citadel", type: "Layer 1", color: "#8a4513", group: "Browns (Leather)" },
-            { name: "Deathclaw Brown", brand: "Citadel", type: "Layer 2", color: "#b0693a", group: "Browns (Leather)" },
-            { name: "Rhinox Hide", brand: "Citadel", type: "Base", color: "#381c1c", group: "Browns (Dark Ground)" },
-            { name: "Gorthor Brown", brand: "Citadel", type: "Layer 1", color: "#594a42", group: "Browns (Dark Ground)" },
-            { name: "Baneblade Brown", brand: "Citadel", type: "Layer 2", color: "#8c7d70", group: "Browns (Dark Ground)" },
-            { name: "Dryad Bark", brand: "Citadel", type: "Base", color: "#2b2521", group: "Browns (Woodland)" },
-            { name: "Karak Stone", brand: "Citadel", type: "Layer 2", color: "#b3a489", group: "Browns (Woodland)" },
-            { name: "Steel Legion Drab", brand: "Citadel", type: "Base", color: "#5f594a", group: "Browns (Muted Mud)" },
-            { name: "Tallarn Sand", brand: "Citadel", type: "Layer 1", color: "#a38f67", group: "Browns (Muted Mud)" },
-            { name: "XV-88", brand: "Citadel", type: "Base", color: "#7c5421", group: "Browns (Ochre Desert)" },
-            { name: "Balor Brown", brand: "Citadel", type: "Layer 1", color: "#9a6c1d", group: "Browns (Ochre Desert)" },
-            { name: "Zamesi Desert", brand: "Citadel", type: "Layer 2", color: "#c3962b", group: "Browns (Ochre Desert)" },
-            { name: "Agrax Earthshade", brand: "Citadel", type: "Shade/Wash", color: "#221711", group: "Utility (Brown Wash)" },
-            { name: "Abaddon Black", brand: "Citadel", type: "Base", color: "#000000", group: "Black & Charcoal" },
-            { name: "Eshin Grey", brand: "Citadel", type: "Layer 1", color: "#383e42", group: "Black & Charcoal" },
-            { name: "Dawnstone", brand: "Citadel", type: "Layer 2", color: "#69737a", group: "Black & Charcoal" },
-            { name: "Corvus Black", brand: "Citadel", type: "Base", color: "#171c21", group: "Raven Black" },
-            { name: "Dark Reaper", brand: "Citadel", type: "Layer 1", color: "#212e36", group: "Raven Black" },
-            { name: "Thunderhawk Blue", brand: "Citadel", type: "Layer 2", color: "#395260", group: "Raven Black" },
-            { name: "Mechanicus Standard Grey", brand: "Citadel", type: "Base", color: "#394246", group: "Greys (Dark Mechanicus)" },
-            { name: "Administratum Grey", brand: "Citadel", type: "Layer 2", color: "#9ca4a7", group: "Greys (Dark Mechanicus)" },
-            { name: "Celestra Grey", brand: "Citadel", type: "Base", color: "#8ba3a7", group: "Greys (Pale Cold)" },
-            { name: "Ulthuan Grey", brand: "Citadel", type: "Layer 1", color: "#c3dbdb", group: "Greys (Pale Cold)" },
-            { name: "Grey Seer", brand: "Citadel", type: "Base", color: "#a2a7a9", group: "Greys (Warm Contrast Base)" },
-            { name: "Nuln Oil", brand: "Citadel", type: "Shade/Wash", color: "#111111", group: "Utility (Black Wash)" },
-            { name: "Retributor Armour", brand: "Citadel", type: "Base", color: "#c69941", group: "Golds (Rich Warm)" },
-            { name: "Auric Armour Gold", brand: "Citadel", type: "Layer 1", color: "#e3bc54", group: "Golds (Rich Warm)" },
-            { name: "Liberator Gold", brand: "Citadel", type: "Layer 2", color: "#cbd3a2", group: "Golds (Rich Warm)" },
-            { name: "Balthasar Gold", brand: "Citadel", type: "Base", color: "#7c5236", group: "Golds (Deep/Bronze)" },
-            { name: "Sycorax Bronze", brand: "Citadel", type: "Layer 1", color: "#9c8265", group: "Golds (Deep/Bronze)" },
-            { name: "Golden Griffon", brand: "Citadel", type: "Layer 2", color: "#c3b37c", group: "Golds (Deep/Bronze)" },
-            { name: "Leadbelcher", brand: "Citadel", type: "Base", color: "#87888c", group: "Silvers (Classic Boltgun)" },
-            { name: "Ironbreaker", brand: "Citadel", type: "Layer 1", color: "#adb2b5", group: "Silvers (Classic Boltgun)" },
-            { name: "Runefang Steel", brand: "Citadel", type: "Layer 2", color: "#cbd3d7", group: "Silvers (Classic Boltgun)" },
-            { name: "Warplock Bronze", brand: "Citadel", type: "Base", color: "#4e3936", group: "Bronzes / Coppers" },
-            { name: "Brass Scorpion", brand: "Citadel", type: "Layer 1", color: "#8a5942", group: "Bronzes / Coppers" },
-            { name: "Runelord Brass", brand: "Citadel", type: "Layer 2", color: "#a89a82", group: "Bronzes / Coppers" },
-            { name: "Grey Knights Steel", brand: "Citadel", type: "Base", color: "#697c8a", group: "Silvers (Blue-Tinged)" },
-            { name: "Stormhost Silver", brand: "Citadel", type: "Layer 2", color: "#dbe3e7", group: "Silvers (Blue-Tinged)" },
-            { name: "Cryptek Armourshade", brand: "Citadel", type: "Shade/Wash", color: "#402516", group: "Utility (Gloss/Metal Wash)" },
-            { name: "Brazen Brass", brand: "Citadel", type: "Layer 1", color: "#9a7c3c", group: "Brass Tones" },
-            { name: "Screaming Bell", brand: "Citadel", type: "Base", color: "#9c523c", group: "Coppers (Bright)" },
-            { name: "Hashut Copper", brand: "Citadel", type: "Layer 1", color: "#bd7354", group: "Coppers (Bright)" },
-            { name: "Death Guard Green", brand: "Citadel", type: "Base", color: "#737c54", group: "Nurgle Armor" },
-            { name: "Elysian Green", brand: "Citadel", type: "Layer 1", color: "#829c42", group: "Nurgle Armor" },
-            { name: "Corax White", brand: "Citadel", type: "Base", color: "#e3e3e7", group: "Chalky Whites" },
-            { name: "Praxeti White", brand: "Citadel", type: "Layer 2", color: "#ffffff", group: "Chalky Whites" },
-            { name: "Lucius Pattern", brand: "Citadel", type: "Base", color: "#d6c5b3", group: "Alternative Flesh" },
-            { name: "Mortarion Grime", brand: "Citadel", type: "Shade/Wash", color: "#3e402e", group: "Utility (Nurgle Shade)" },
-            { name: "Thondia Brown", brand: "Citadel", type: "Base", color: "#423225", group: "Ghurish Browns" },
-            { name: "Hobgrot Hide", brand: "Citadel", type: "Layer 1", color: "#ab9659", group: "Ghurish Browns" },
-            { name: "Phalanx Yellow", brand: "Citadel", type: "Layer 1", color: "#ebd63d", group: "Yellow-Brown Muds" },
-            { name: "Dorn Yellow", brand: "Citadel", type: "Layer 2", color: "#fff987", group: "Yellow-Brown Muds" },
-            { name: "Gore-Grunta Fur (Dry alternative)", brand: "Citadel", type: "Base", color: "#693c16", group: "Warm Fur" },
-            { name: "Iron Warriors", brand: "Citadel", type: "Base", color: "#4a4e52", group: "Dark Heavy Irons" },
-            { name: "Perseus Purple", brand: "Citadel", type: "Base", color: "#543c69", group: "Alternative Purples" },
-            { name: "Athonian Camoshade", brand: "Citadel", type: "Shade/Wash", color: "#2e3b25", group: "Utility (Camo Wash)" },
-            { name: "Sons of Horus Green", brand: "Citadel", type: "Base", color: "#00655e", group: "Horus Sea Greens" },
-            { name: "Gauss Blaster Green", brand: "Citadel", type: "Layer 2", color: "#a4ded6", group: "Horus Sea Greens" },
-            { name: "Coelia Greenshade (Base substitute)", brand: "Citadel", type: "Base", color: "#004a4e", group: "Deep Aquatic" },
-            { name: "Phoenician Purple", brand: "Citadel", type: "Base", color: "#421652", group: "Royal Purples" },
-            { name: "Tuskgor Fur", brand: "Citadel", type: "Layer 1", color: "#9c544a", group: "Muted Terracottas" },
-            { name: "Doombull Brown", brand: "Citadel", type: "Base", color: "#592121", group: "Red-Browns" },
-            { name: "Astorath Red", brand: "Citadel", type: "Layer 2", color: "#e3656c", group: "Red-Browns" },
-            { name: "Fuegan Orange", brand: "Citadel", type: "Shade/Wash", color: "#bd4a1c", group: "Utility (Orange Wash)" },
-            { name: "Baal Red (Dry substitute)", brand: "Citadel", type: "Base", color: "#da1c25", group: "Contrast-Style Reds" },
-            { name: "Doomfire Magenta", brand: "Citadel", type: "Base", color: "#e31c69", group: "Vibrant Magentas" },
-            { name: "Sigismund Yellow", brand: "Citadel", type: "Base", color: "#ffaa00", group: "Vibrant Yellows" },
-            { name: "Asurmen Blue", brand: "Citadel", type: "Base", color: "#003b87", group: "Deep Blue Contrast-Alike" },
-            { name: "Karandras Green", brand: "Citadel", type: "Base", color: "#008a3c", group: "Striking Greens" },
-            { name: "Coelia Greenshade", brand: "Citadel", type: "Shade/Wash", color: "#004a4e", group: "Utility (Turquoise Wash)" },
-            { name: "Kroxigor Blue", brand: "Citadel", type: "Base", color: "#009cbd", group: "Light Sea Blues" },
-            { name: "Imperial Fists Yellow", brand: "Citadel", type: "Base", color: "#ffcc00", group: "Imperial Yellows" },
-            { name: "Badrukk Flash", brand: "Citadel", type: "Base", color: "#e3b300", group: "Ork Flash Yellows" },
-            { name: "Hexos Palesun", brand: "Citadel", type: "Layer 2", color: "#fff287", group: "Ork Flash Yellows" },
-            { name: "Striking Scorpion", brand: "Citadel", type: "Base", color: "#3dc300", group: "Sci-Fi Greens" },
-            { name: "Magmadroth Flame", brand: "Citadel", type: "Base", color: "#f14a1c", group: "Fiery Oranges" },
-            { name: "Tesseract Glow", brand: "Citadel", type: "Shade/Wash", color: "#1fff00", group: "Utility (Fluorescent Tech)" },
-            { name: "Blood Angels Red", brand: "Citadel", type: "Contrast Line", color: "#b31212", group: "Contrast Expansion 1" },
-            { name: "Flesh Tearers Red", brand: "Citadel", type: "Contrast Line", color: "#690a0a", group: "Contrast Expansion 1" },
-            { name: "Volupus Pink", brand: "Citadel", type: "Contrast Line", color: "#7c1645", group: "Contrast Expansion 1" },
-            { name: "Shyish Purple", brand: "Citadel", type: "Contrast Line", color: "#251233", group: "Contrast Expansion 1" },
-            { name: "Magos Purple", brand: "Citadel", type: "Contrast Line", color: "#9c658d", group: "Contrast Expansion 1" },
-            { name: "Leviadon Blue", brand: "Citadel", type: "Contrast Line", color: "#00163b", group: "Contrast Expansion 1" },
-            { name: "Talassar Blue", brand: "Citadel", type: "Contrast Line", color: "#007cbd", group: "Contrast Expansion 1" },
-            { name: "Akhelian Green", brand: "Citadel", type: "Contrast Line", color: "#00697c", group: "Contrast Expansion 1" },
-            { name: "Terradon Turquoise", brand: "Citadel", type: "Contrast Line", color: "#005a59", group: "Contrast Expansion 1" },
-            { name: "Dark Angels Green", brand: "Citadel", type: "Contrast Line", color: "#003b21", group: "Contrast Expansion 1" },
-            { name: "Ork Flesh", brand: "Citadel", type: "Contrast Line", color: "#1c7c25", group: "Contrast Expansion 1" },
-            { name: "Creed Camo", brand: "Citadel", type: "Contrast Line", color: "#2e5933", group: "Contrast Expansion 1" },
-            { name: "Plaguebearer Flesh", brand: "Citadel", type: "Contrast Line", color: "#9ca84a", group: "Contrast Expansion 1" },
-            { name: "Striking Scorpion Green", brand: "Citadel", type: "Contrast Line", color: "#3dc300", group: "Contrast Expansion 1" },
-            { name: "Mantism Warriors Green", brand: "Citadel", type: "Contrast Line", color: "#69ab32", group: "Contrast Expansion 1" },
-            { name: "Gryph-Hound Orange", brand: "Citadel", type: "Contrast Line", color: "#cf4512", group: "Contrast Expansion 1" },
-            { name: "Iyanden Yellow", brand: "Citadel", type: "Contrast Line", color: "#ebd300", group: "Contrast Expansion 2" },
-            { name: "Nazdreg Yellow", brand: "Citadel", type: "Contrast Line", color: "#ab8a12", group: "Contrast Expansion 2" },
-            { name: "Gore-Grunta Fur", brand: "Citadel", type: "Contrast Line", color: "#693c16", group: "Contrast Expansion 2" },
-            { name: "Snakebite Leather", brand: "Citadel", type: "Contrast Line", color: "#87541c", group: "Contrast Expansion 2" },
-            { name: "Cygor Brown", brand: "Citadel", type: "Contrast Line", color: "#331c16", group: "Contrast Expansion 2" },
-            { name: "Wyldwood", brand: "Citadel", type: "Contrast Line", color: "#422e25", group: "Contrast Expansion 2" },
-            { name: "Fyreslayer Flesh", brand: "Citadel", type: "Contrast Line", color: "#b37359", group: "Contrast Expansion 2" },
-            { name: "Guilliman Flesh", brand: "Citadel", type: "Contrast Line", color: "#c38569", group: "Contrast Expansion 2" },
-            { name: "Darkoath Flesh", brand: "Citadel", type: "Contrast Line", color: "#d1a387", group: "Contrast Expansion 2" },
-            { name: "Skeleton Horde", brand: "Citadel", type: "Contrast Line", color: "#bcac82", group: "Contrast Expansion 2" },
-            { name: "Aggaros Dunes", brand: "Citadel", type: "Contrast Line", color: "#ab9659", group: "Contrast Expansion 2" },
-            { name: "Basilicanum Grey", brand: "Citadel", type: "Contrast Line", color: "#54595c", group: "Contrast Expansion 2" },
-            { name: "Space Wolves Grey", brand: "Citadel", type: "Contrast Line", color: "#697c8d", group: "Contrast Expansion 2" },
-            { name: "Gryph-Charger Grey", brand: "Citadel", type: "Contrast Line", color: "#829eb3", group: "Contrast Expansion 2" },
-            { name: "Apothecary White", brand: "Citadel", type: "Contrast Line", color: "#cbd3d6", group: "Contrast Expansion 2" },
-            { name: "Black Templar", brand: "Citadel", type: "Contrast Line", color: "#161c21", group: "Contrast Expansion 2" },
-            { name: "Blood for the Blood God", brand: "Citadel", type: "Technical Line", color: "#690002", group: "Gore Effects" },
-            { name: "Nihilakh Oxide", brand: "Citadel", type: "Technical Line", color: "#59b39c", group: "Verdigris Effects" },
-            { name: "Typhus Corrosion", brand: "Citadel", type: "Technical Line", color: "#38332e", group: "Rust Foundations" },
-            { name: "Ryza Rust (Dry-style)", brand: "Citadel", type: "Technical Line", color: "#cf591c", group: "Rust Textures" },
-            { name: "Nurgle's Rot", brand: "Citadel", type: "Technical Line", color: "#7c8d25", group: "Slime Effects" },
-            { name: "Waystone Green", brand: "Citadel", type: "Technical Line", color: "#00a342", group: "Gemstone FX" },
-            { name: "Spiritstone Red", brand: "Citadel", type: "Technical Line", color: "#da121a", group: "Gemstone FX" },
-            { name: "Soulstone Blue", brand: "Citadel", type: "Technical Line", color: "#0069cf", group: "Gemstone FX" },
-            { name: "Ardcoat", brand: "Citadel", type: "Technical Line", color: "#e3e3e7", group: "Gloss Varnish" },
-            { name: "Stormshield", brand: "Citadel", type: "Technical Line", color: "#cbd4c5", group: "Matt Varnish" },
-            { name: "Contrast Medium", brand: "Citadel", type: "Technical Line", color: "#ffffff", group: "Thinner Medium" },
-            { name: "Lahmian Medium", brand: "Citadel", type: "Technical Line", color: "#ffffff", group: "Thinner Medium" },
-            { name: "Liquid Talent (Custom)", brand: "Citadel", type: "Technical Line", color: "#423225", group: "Hobbyist Mix" },
-            { name: "Gloss Medium", brand: "Citadel", type: "Technical Line", color: "#ffffff", group: "Hobbyist Mix" },
-            { name: "Airbrush Thinner", brand: "Citadel", type: "Technical Line", color: "#ffffff", group: "Hobbyist Mix" },
-            { name: "Vallejo Flow Improver", brand: "Citadel", type: "Technical Line", color: "#ffffff", group: "Hobbyist Mix" },
-            { name: "Astrogranite", brand: "Citadel", type: "Texture Base", color: "#54595c", group: "Base Ground Textures" },
-            { name: "Astrogranite Debris", brand: "Citadel", type: "Texture Base", color: "#474a4d", group: "Base Ground Textures" },
-            { name: "Stirland Mud", brand: "Citadel", type: "Texture Base", color: "#332116", group: "Base Ground Textures" },
-            { name: "Stirland Battlemire", brand: "Citadel", type: "Texture Base", color: "#251612", group: "Base Ground Textures" },
-            { name: "Armageddon Dust", brand: "Citadel", type: "Texture Base", color: "#ab9659", group: "Base Ground Textures" },
-            { name: "Armageddon Dunes", brand: "Citadel", type: "Texture Base", color: "#9c8547", group: "Base Ground Textures" },
-            { name: "Agrellan Earth", brand: "Citadel", type: "Texture Base", color: "#bc9c73", group: "Crackle Textures" },
-            { name: "Agrellan Badland", brand: "Citadel", type: "Texture Base", color: "#8a6942", group: "Crackle Textures" },
-            { name: "Mordant Earth", brand: "Citadel", type: "Texture Base", color: "#111111", group: "Crackle Textures" },
-            { name: "Valhallan Blizzard", brand: "Citadel", type: "Texture Base", color: "#ffffff", group: "Snow Textures" }
-        ];
+        // Row P
+        { slot: "P1", type: "Base", name: "Dark Prussian Blue", family: "AK Deep Blues" },
+        { slot: "P2", type: "Layer 1", name: "Ocean Blue", family: "AK Deep Blues" },
+        { slot: "P3", type: "Layer 2", name: "Arkhaiak Turquoise", family: "AK Deep Blues" },
+        { slot: "P4", type: "Base", name: "Deep Blue", family: "AK Royal Blues" },
+        { slot: "P5", type: "Layer 1", name: "Ducat Blue", family: "AK Royal Blues" },
+        { slot: "P6", type: "Layer 2", name: "Amethyst Blue", family: "AK Royal Blues" },
+        { slot: "P7", type: "Base", name: "Dark Blue", family: "AK Night Blues" },
+        { slot: "P8", type: "Layer 1", name: "Imperial Blue", family: "AK Night Blues" },
+        { slot: "P9", type: "Layer 2", name: "King Purple", family: "AK Night Blues" },
+        { slot: "P10", type: "Base", name: "Black Green", family: "AK Forest Greens" },
+        { slot: "P11", type: "Layer 1", name: "Deep Green", family: "AK Forest Greens" },
+        { slot: "P12", type: "Layer 2", name: "Frog Green", family: "AK Forest Greens" },
 
-        // Core Layout System Allocation Engine
-        const activeWallLayout = {};
+        // Row Q
+        { slot: "Q1", type: "Base", name: "Cold Green", family: "AK Vibrant Greens" },
+        { slot: "Q2", type: "Layer 1", name: "Green Skin Punch", family: "AK Vibrant Greens" },
+        { slot: "Q3", type: "Layer 2", name: "Slime Green", family: "AK Vibrant Greens" },
+        { slot: "Q4", type: "Base", name: "Anthracite Gray", family: "AK Charcoal Greys" },
+        { slot: "Q5", type: "Layer 1", name: "Basalt Gray", family: "AK Charcoal Greys" },
+        { slot: "Q6", type: "Layer 2", name: "Graphite", family: "AK Charcoal Greys" },
+        { slot: "Q7", type: "Base", name: "Black", family: "AK Pure Tones" },
+        { slot: "Q8", type: "Layer 1", name: "Silver Gray", family: "AK Pure Tones" },
+        { slot: "Q9", type: "Layer 2", name: "White", family: "AK Pure Tones" },
+        { slot: "Q10", type: "Open Slot", name: null, family: null },
+        { slot: "Q11", type: "Open Slot", name: null, family: null },
+        { slot: "Q12", type: "Open Slot", name: null, family: null }
+    ];
 
-        function buildStructuralMatrix() {
-            // COLUMN A
-            activeWallLayout["A1"] = { name: "Mephiston Red", brand: "Citadel", type: "Base", color: "#9a1115", group: "Reds (Classic)" };
-            activeWallLayout["A2"] = { name: "Evil Sunz Scarlet", brand: "Citadel", type: "Layer 1", color: "#c01413", group: "Reds (Classic)" };
-            activeWallLayout["A3"] = { name: "Wild Rider Red", brand: "Citadel", type: "Layer 2", color: "#e82e1b", group: "Reds (Classic)" };
-            activeWallLayout["A4"] = { name: "Khorne Red", brand: "Citadel", type: "Base", color: "#6a0005", group: "Reds (Dark)" };
-            activeWallLayout["A5"] = { name: "Wazdakka Red", brand: "Citadel", type: "Layer 1", color: "#880c1e", group: "Reds (Dark)" };
-            activeWallLayout["A6"] = { name: "Squig Orange", brand: "Citadel", type: "Layer 2", color: "#a74d36", group: "Reds (Dark)" };
-            activeWallLayout["A7"] = { name: "Screamer Pink", brand: "Citadel", type: "Base", color: "#7c1645", group: "Pinks / Magentas" };
-            activeWallLayout["A8"] = { name: "Pink Horror", brand: "Citadel", type: "Layer 1", color: "#9c3667", group: "Pinks / Magentas" };
-            activeWallLayout["A9"] = { name: "Emperor's Children", brand: "Citadel", type: "Layer 2", color: "#b94689", group: "Pinks / Magentas" };
-            activeWallLayout["A10"] = { name: "Barak-Nar Burgundy", brand: "Citadel", type: "Base", color: "#45162b", group: "Deep Burgundies" };
-            activeWallLayout["A11"] = { name: "Pink Horror", brand: "Citadel", type: "Layer 1", color: "#9c3667", group: "Deep Burgundies" };
-            activeWallLayout["A12"] = { name: "Changeling Pink", brand: "Citadel", type: "Layer 2", color: "#da96b5", group: "Deep Burgundies" };
-            activeWallLayout["A13"] = { name: "Gal Vorbak Red", brand: "Citadel", type: "Base", color: "#4a121a", group: "Daemon Reds" };
-            activeWallLayout["A14"] = { name: "Word Bearers Red", brand: "Citadel", type: "Layer 1", color: "#622521", group: "Daemon Reds" };
-            activeWallLayout["A15"] = { name: "Squig Orange", brand: "Citadel", type: "Layer 2", color: "#a74d36", group: "Daemon Reds" };
-            activeWallLayout["A16"] = { name: "Carroburg Crimson", brand: "Citadel", type: "Shade/Wash", color: "#491014", group: "Utility (Red Wash)" };
+    let selectedSlotId = null;
 
-            // COLUMN B
-            activeWallLayout["B1"] = { name: "Macragge Blue", brand: "Citadel", type: "Base", color: "#0d407f", group: "Blues (Ultramarines)" };
-            activeWallLayout["B2"] = { name: "Altdorf Guard Blue", brand: "Citadel", type: "Layer 1", color: "#1d559d", group: "Blues (Ultramarines)" };
-            activeWallLayout["B3"] = { name: "Calgar Blue", brand: "Citadel", type: "Layer 2", color: "#3d7dbd", group: "Blues (Ultramarines)" };
-            activeWallLayout["B4"] = { name: "Kantor Blue", brand: "Citadel", type: "Base", color: "#021f46", group: "Blues (Dark Crimson)" };
-            activeWallLayout["B5"] = { name: "Alaitoc Blue", brand: "Citadel", type: "Layer 1", color: "#254a76", group: "Blues (Dark Crimson)" };
-            activeWallLayout["B6"] = { name: "Hoeth Blue", brand: "Citadel", type: "Layer 2", color: "#4c78a4", group: "Blues (Dark Crimson)" };
-            activeWallLayout["B7"] = { name: "Caledor Sky", brand: "Citadel", type: "Base", color: "#1d65a6", group: "Blues (Bright)" };
-            activeWallLayout["B8"] = { name: "Teclis Blue", brand: "Citadel", type: "Layer 1", color: "#3282c4", group: "Blues (Bright)" };
-            activeWallLayout["B9"] = { name: "Lothern Blue", brand: "Citadel", type: "Layer 2", color: "#54aedd", group: "Blues (Bright)" };
-            activeWallLayout["B10"] = { name: "Thousand Sons Blue", brand: "Citadel", type: "Base", color: "#135467", group: "Teals / Tzeentch" };
-            activeWallLayout["B11"] = { name: "Ahriman Blue", brand: "Citadel", type: "Layer 1", color: "#1f758a", group: "Teals / Tzeentch" };
-            activeWallLayout["B12"] = { name: "Temple Guard Blue", brand: "Citadel", type: "Layer 2", color: "#3fa4b6", group: "Teals / Tzeentch" };
-            activeWallLayout["B13"] = { name: "The Fang", brand: "Citadel", type: "Base", color: "#405465", group: "Space Wolf Grey-Blues" };
-            activeWallLayout["B14"] = { name: "Russ Grey", brand: "Citadel", type: "Layer 1", color: "#52677d", group: "Space Wolf Grey-Blues" };
-            activeWallLayout["B15"] = { name: "Fenrisian Grey", brand: "Citadel", type: "Layer 2", color: "#7292a6", group: "Space Wolf Grey-Blues" };
-            activeWallLayout["B16"] = { name: "Drakenhof Nightshade", brand: "Citadel", type: "Shade/Wash", color: "#111f33", group: "Utility (Blue Wash)" };
+    function renderRack() {
+        // Clear containers
+        document.getElementById('row-O').innerHTML = '';
+        document.getElementById('row-P').innerHTML = '';
+        document.getElementById('row-Q').innerHTML = '';
 
-            // COLUMN C
-            activeWallLayout["C1"] = { name: "Caliban Green", brand: "Citadel", type: "Base", color: "#0a3d21", group: "Greens (Dark/Angels)" };
-            activeWallLayout["C2"] = { name: "Warpstone Glow", brand: "Citadel", type: "Layer 1", color: "#137438", group: "Greens (Dark/Angels)" };
-            activeWallLayout["C3"] = { name: "Moot Green", brand: "Citadel", type: "Layer 2", color: "#3da224", group: "Greens (Dark/Angels)" };
-            activeWallLayout["C4"] = { name: "Waaagh! Flesh", brand: "Citadel", type: "Base", color: "#1a422b", group: "Greens (Ork skin)" };
-            activeWallLayout["C5"] = { name: "Warboss Green", brand: "Citadel", type: "Layer 1", color: "#326c45", group: "Greens (Ork skin)" };
-            activeWallLayout["C6"] = { name: "Skarsnik Green", brand: "Citadel", type: "Layer 2", color: "#598a5d", group: "Greens (Ork skin)" };
-            activeWallLayout["C7"] = { name: "Castellan Green", brand: "Citadel", type: "Base", color: "#2b331f", group: "Greens (Military)" };
-            activeWallLayout["C8"] = { name: "Loren Forest", brand: "Citadel", type: "Layer 1", color: "#4a5838", group: "Greens (Military)" };
-            activeWallLayout["C9"] = { name: "Straken Green", brand: "Citadel", type: "Layer 2", color: "#608945", group: "Greens (Military)" };
-            activeWallLayout["C10"] = { name: "Death World Forest", brand: "Citadel", type: "Base", color: "#545838", group: "Greens (Death/Nurgle)" };
-            activeWallLayout["C11"] = { name: "Ogryn Camo", brand: "Citadel", type: "Layer 1", color: "#838a53", group: "Greens (Death/Nurgle)" };
-            activeWallLayout["C12"] = { name: "Krieg Khaki", brand: "Citadel", type: "Layer 2", color: "#aab07d", group: "Greens (Death/Nurgle)" };
-            activeWallLayout["C13"] = { name: "Vulkan Green", brand: "Citadel", type: "Base", color: "#223c2a", group: "Greens (Salamanders)" };
-            activeWallLayout["C14"] = { name: "Loren Forest", brand: "Citadel", type: "Layer 1", color: "#4a5838", group: "Greens (Salamanders)" };
-            activeWallLayout["C15"] = { name: "Nurgling Green", brand: "Citadel", type: "Layer 2", color: "#7e9a6b", group: "Greens (Salamanders)" };
-            activeWallLayout["C16"] = { name: "Biel-Tan Green", brand: "Citadel", type: "Shade/Wash", color: "#11381e", group: "Utility (Green Wash)" };
-
-            // COLUMN D
-            activeWallLayout["D1"] = { name: "Naggaroth Night", brand: "Citadel", type: "Base", color: "#3b1442", group: "Purples (Dark)" };
-            activeWallLayout["D2"] = { name: "Xereus Purple", brand: "Citadel", type: "Layer 1", color: "#47125a", group: "Purples (Dark)" };
-            activeWallLayout["D3"] = { name: "Genestealer Purple", brand: "Citadel", type: "Layer 2", color: "#764094", group: "Purples (Dark)" };
-            activeWallLayout["D4"] = { name: "Daemonette Hide", brand: "Citadel", type: "Base", color: "#605465", group: "Purples (Slaanesh)" };
-            activeWallLayout["D5"] = { name: "Warpfiend Grey", brand: "Citadel", type: "Layer 1", color: "#696575", group: "Purples (Slaanesh)" };
-            activeWallLayout["D6"] = { name: "Slaanesh Grey", brand: "Citadel", type: "Layer 2", color: "#827d8e", group: "Purples (Slaanesh)" };
-            activeWallLayout["D7"] = { name: "Incubi Darkness", brand: "Citadel", type: "Base", color: "#0b2e33", group: "Sea Greens / Dark Eldar" };
-            activeWallLayout["D8"] = { name: "Kabalite Green", brand: "Citadel", type: "Layer 1", color: "#005a52", group: "Sea Greens / Dark Eldar" };
-            activeWallLayout["D9"] = { name: "Sybarite Green", brand: "Citadel", type: "Layer 2", color: "#178973", group: "Sea Greens / Dark Eldar" };
-            activeWallLayout["D10"] = { name: "Stegadon Scale Green", brand: "Citadel", type: "Base", color: "#064253", group: "Deep Sea Blue" };
-            activeWallLayout["D11"] = { name: "Sotek Green", brand: "Citadel", type: "Layer 1", color: "#0b697f", group: "Deep Sea Blue" };
-            activeWallLayout["D12"] = { name: "Temple Guard Blue", brand: "Citadel", type: "Layer 2", color: "#3fa4b6", group: "Deep Sea Blue" };
-            activeWallLayout["D13"] = { name: "Lucius Lilac", brand: "Citadel", type: "Base", color: "#a48ba7", group: "Muted Purples" };
-            activeWallLayout["D14"] = { name: "Kakophoni Purple", brand: "Citadel", type: "Layer 1", color: "#876587", group: "Muted Purples" };
-            activeWallLayout["D15"] = { name: "Dechala Lilac", brand: "Citadel", type: "Layer 2", color: "#c3aec3", group: "Muted Purples" };
-            activeWallLayout["D16"] = { name: "Druchii Violet", brand: "Citadel", type: "Shade/Wash", color: "#381442", group: "Utility (Purple Wash)" };
-
-            // COLUMN E
-            activeWallLayout["E1"] = { name: "Averland Sunset", brand: "Citadel", type: "Base", color: "#fbb81c", group: "Yellows (Warm)" };
-            activeWallLayout["E2"] = { name: "Yriel Yellow", brand: "Citadel", type: "Layer 1", color: "#ffd900", group: "Yellows (Warm)" };
-            activeWallLayout["E3"] = { name: "Flash Gitz Yellow", brand: "Citadel", type: "Layer 2", color: "#fff200", group: "Yellows (Warm)" };
-            activeWallLayout["E4"] = { name: "Jokaero Orange", brand: "Citadel", type: "Base", color: "#c65925", group: "Oranges" };
-            activeWallLayout["E5"] = { name: "Troll Slayer Orange", brand: "Citadel", type: "Layer 1", color: "#f16522", group: "Oranges" };
-            activeWallLayout["E6"] = { name: "Fire Dragon Bright", brand: "Citadel", type: "Layer 2", color: "#f58232", group: "Oranges" };
-            activeWallLayout["E7"] = { name: "Morghast Bone", brand: "Citadel", type: "Base", color: "#c6b38a", group: "Warm Bones" };
-            activeWallLayout["E8"] = { name: "Screaming Skull", brand: "Citadel", type: "Layer 1", color: "#dbd3b2", group: "Warm Bones" };
-            activeWallLayout["E9"] = { name: "White Scar", brand: "Citadel", type: "Layer 2", color: "#ffffff", group: "Warm Bones" };
-            activeWallLayout["E10"] = { name: "Zandri Dust", brand: "Citadel", type: "Base", color: "#9da37d", group: "Khaki Bones" };
-            activeWallLayout["E11"] = { name: "Ushabti Bone", brand: "Citadel", type: "Layer 1", color: "#bcbb93", group: "Khaki Bones" };
-            activeWallLayout["E12"] = { name: "Screaming Skull", brand: "Citadel", type: "Layer 2", color: "#dbd3b2", group: "Khaki Bones" };
-            activeWallLayout["E13"] = { name: "Ionrach Flesh", brand: "Citadel", type: "Base", color: "#9fa496", group: "Deep Sea Flesh" };
-            activeWallLayout["E14"] = { name: "Deepkin Flesh", brand: "Citadel", type: "Layer 1", color: "#cbd4c5", group: "Deep Sea Flesh" };
-            activeWallLayout["E15"] = { name: "White Scar", brand: "Citadel", type: "Layer 2", color: "#ffffff", group: "Deep Sea Flesh" };
-            activeWallLayout["E16"] = { name: "Casandora Yellow", brand: "Citadel", type: "Shade/Wash", color: "#e39a1c", group: "Utility (Yellow Wash)" };
-
-            // COLUMN F
-            activeWallLayout["F1"] = { name: "Bugman's Glow", brand: "Citadel", type: "Base", color: "#804e40", group: "Flesh Tones (Cadian)" };
-            activeWallLayout["F2"] = { name: "Cadian Fleshtone", brand: "Citadel", type: "Layer 1", color: "#c58b70", group: "Flesh Tones (Cadian)" };
-            activeWallLayout["F3"] = { name: "Kislev Flesh", brand: "Citadel", type: "Layer 2", color: "#d1a581", group: "Flesh Tones (Cadian)" };
-            activeWallLayout["F4"] = { name: "Ratskin Flesh", brand: "Citadel", type: "Base", color: "#a8654a", group: "Flesh Tones (Warm)" };
-            activeWallLayout["F5"] = { name: "Bestigor Flesh", brand: "Citadel", type: "Layer 1", color: "#d18959", group: "Flesh Tones (Warm)" };
-            activeWallLayout["F6"] = { name: "Ungor Flesh", brand: "Citadel", type: "Layer 2", color: "#e3bc8e", group: "Flesh Tones (Warm)" };
-            activeWallLayout["F7"] = { name: "Catachan Flesh", brand: "Citadel", type: "Base", color: "#4a2e25", group: "Flesh Tones (Dark)" };
-            activeWallLayout["F8"] = { name: "Bloodreaver Flesh", brand: "Citadel", type: "Layer 1", color: "#6a4032", group: "Flesh Tones (Dark)" };
-            activeWallLayout["F9"] = { name: "Knight-Questor Flesh", brand: "Citadel", type: "Layer 2", color: "#94654e", group: "Flesh Tones (Dark)" };
-            activeWallLayout["F10"] = { name: "Rakarth Flesh", brand: "Citadel", type: "Base", color: "#9c948e", group: "Flesh Tones (Pale/Dead)" };
-            activeWallLayout["F11"] = { name: "Flayed One Flesh", brand: "Citadel", type: "Layer 1", color: "#cdbaaf", group: "Flesh Tones (Pale/Dead)" };
-            activeWallLayout["F12"] = { name: "Pallid Wych Flesh", brand: "Citadel", type: "Layer 2", color: "#cdccc4", group: "Flesh Tones (Pale/Dead)" };
-            activeWallLayout["F13"] = { name: "Night Lords Blue", brand: "Citadel", type: "Base", color: "#001b3a", group: "Midnight Blues" };
-            activeWallLayout["F14"] = { name: "Kantor Blue", brand: "Citadel", type: "Layer 1", color: "#021f46", group: "Midnight Blues" };
-            activeWallLayout["F15"] = { name: "Chronus Blue", brand: "Citadel", type: "Layer 2", color: "#6fa1d1", group: "Midnight Blues" };
-            activeWallLayout["F16"] = { name: "Reikland Fleshshade", brand: "Citadel", type: "Shade/Wash", color: "#7c3c25", group: "Utility (Flesh Wash)" };
-
-            // COLUMN G
-            activeWallLayout["G1"] = { name: "Mournfang Brown", brand: "Citadel", type: "Base", color: "#5c2e16", group: "Browns (Leather)" };
-            activeWallLayout["G2"] = { name: "Skrag Brown", brand: "Citadel", type: "Layer 1", color: "#8a4513", group: "Browns (Leather)" };
-            activeWallLayout["G3"] = { name: "Deathclaw Brown", brand: "Citadel", type: "Layer 2", color: "#b0693a", group: "Browns (Leather)" };
-            activeWallLayout["G4"] = { name: "Rhinox Hide", brand: "Citadel", type: "Base", color: "#381c1c", group: "Browns (Dark Ground)" };
-            activeWallLayout["G5"] = { name: "Gorthor Brown", brand: "Citadel", type: "Layer 1", color: "#594a42", group: "Browns (Dark Ground)" };
-            activeWallLayout["G6"] = { name: "Baneblade Brown", brand: "Citadel", type: "Layer 2", color: "#8c7d70", group: "Browns (Dark Ground)" };
-            activeWallLayout["G7"] = { name: "Dryad Bark", brand: "Citadel", type: "Base", color: "#2b2521", group: "Browns (Woodland)" };
-            activeWallLayout["G8"] = { name: "Gorthor Brown", brand: "Citadel", type: "Layer 1", color: "#594a42", group: "Browns (Woodland)" };
-            activeWallLayout["G9"] = { name: "Karak Stone", brand: "Citadel", type: "Layer 2", color: "#b3a489", group: "Browns (Woodland)" };
-            activeWallLayout["G10"] = { name: "Steel Legion Drab", brand: "Citadel", type: "Base", color: "#5f594a", group: "Browns (Muted Mud)" };
-            activeWallLayout["G11"] = { name: "Tallarn Sand", brand: "Citadel", type: "Layer 1", color: "#a38f67", group: "Browns (Muted Mud)" };
-            activeWallLayout["G12"] = { name: "Karak Stone", brand: "Citadel", type: "Layer 2", color: "#b3a489", group: "Browns (Muted Mud)" };
-            activeWallLayout["G13"] = { name: "XV-88", brand: "Citadel", type: "Base", color: "#7c5421", group: "Browns (Ochre Desert)" };
-            activeWallLayout["G14"] = { name: "Balor Brown", brand: "Citadel", type: "Layer 1", color: "#9a6c1d", group: "Browns (Ochre Desert)" };
-            activeWallLayout["G15"] = { name: "Zamesi Desert", brand: "Citadel", type: "Layer 2", color: "#c3962b", group: "Browns (Ochre Desert)" };
-            activeWallLayout["G16"] = { name: "Agrax Earthshade", brand: "Citadel", type: "Shade/Wash", color: "#221711", group: "Utility (Brown Wash)" };
-
-            // COLUMN H
-            activeWallLayout["H1"] = { name: "Abaddon Black", brand: "Citadel", type: "Base", color: "#000000", group: "Black & Charcoal" };
-            activeWallLayout["H2"] = { name: "Eshin Grey", brand: "Citadel", type: "Layer 1", color: "#383e42", group: "Black & Charcoal" };
-            activeWallLayout["H3"] = { name: "Dawnstone", brand: "Citadel", type: "Layer 2", color: "#69737a", group: "Black & Charcoal" };
-            activeWallLayout["H4"] = { name: "Corvus Black", brand: "Citadel", type: "Base", color: "#171c21", group: "Raven Black" };
-            activeWallLayout["H5"] = { name: "Dark Reaper", brand: "Citadel", type: "Layer 1", color: "#212e36", group: "Raven Black" };
-            activeWallLayout["H6"] = { name: "Thunderhawk Blue", brand: "Citadel", type: "Layer 2", color: "#395260", group: "Raven Black" };
-            activeWallLayout["H7"] = { name: "Mechanicus Standard Grey", brand: "Citadel", type: "Base", color: "#394246", group: "Greys (Dark Mechanicus)" };
-            activeWallLayout["H8"] = { name: "Dawnstone", brand: "Citadel", type: "Layer 1", color: "#69737a", group: "Greys (Dark Mechanicus)" };
-            activeWallLayout["H9"] = { name: "Administratum Grey", brand: "Citadel", type: "Layer 2", color: "#9ca4a7", group: "Greys (Dark Mechanicus)" };
-            activeWallLayout["H10"] = { name: "Celestra Grey", brand: "Citadel", type: "Base", color: "#8ba3a7", group: "Greys (Pale Cold)" };
-            activeWallLayout["H11"] = { name: "Ulthuan Grey", brand: "Citadel", type: "Layer 1", color: "#c3dbdb", group: "Greys (Pale Cold)" };
-            activeWallLayout["H12"] = { name: "White Scar", brand: "Citadel", type: "Layer 2", color: "#ffffff", group: "Greys (Pale Cold)" };
-            activeWallLayout["H13"] = { name: "Grey Seer", brand: "Citadel", type: "Base", color: "#a2a7a9", group: "Greys (Warm Contrast Base)" };
-            activeWallLayout["H14"] = { name: "Ulthuan Grey", brand: "Citadel", type: "Layer 1", color: "#c3dbdb", group: "Greys (Warm Contrast Base)" };
-            activeWallLayout["H15"] = { name: "White Scar", brand: "Citadel", type: "Layer 2", color: "#ffffff", group: "Greys (Warm Contrast Base)" };
-            activeWallLayout["H16"] = { name: "Nuln Oil", brand: "Citadel", type: "Shade/Wash", color: "#111111", group: "Utility (Black Wash)" };
-
-            // COLUMN I
-            activeWallLayout["I1"] = { name: "Retributor Armour", brand: "Citadel", type: "Base", color: "#c69941", group: "Golds (Rich Warm)" };
-            activeWallLayout["I2"] = { name: "Auric Armour Gold", brand: "Citadel", type: "Layer 1", color: "#e3bc54", group: "Golds (Rich Warm)" };
-            activeWallLayout["I3"] = { name: "Liberator Gold", brand: "Citadel", type: "Layer 2", color: "#cbd3a2", group: "Golds (Rich Warm)" };
-            activeWallLayout["I4"] = { name: "Balthasar Gold", brand: "Citadel", type: "Base", color: "#7c5236", group: "Golds (Deep/Bronze)" };
-            activeWallLayout["I5"] = { name: "Sycorax Bronze", brand: "Citadel", type: "Layer 1", color: "#9c8265", group: "Golds (Deep/Bronze)" };
-            activeWallLayout["I6"] = { name: "Golden Griffon", brand: "Citadel", type: "Layer 2", color: "#c3b37c", group: "Golds (Deep/Bronze)" };
-            activeWallLayout["I7"] = { name: "Leadbelcher", brand: "Citadel", type: "Base", color: "#87888c", group: "Silvers (Classic Boltgun)" };
-            activeWallLayout["I8"] = { name: "Ironbreaker", brand: "Citadel", type: "Layer 1", color: "#adb2b5", group: "Silvers (Classic Boltgun)" };
-            activeWallLayout["I9"] = { name: "Runefang Steel", brand: "Citadel", type: "Layer 2", color: "#cbd3d7", group: "Silvers (Classic Boltgun)" };
-            activeWallLayout["I10"] = { name: "Warplock Bronze", brand: "Citadel", type: "Base", color: "#4e3936", group: "Bronzes / Coppers" };
-            activeWallLayout["I11"] = { name: "Brass Scorpion", brand: "Citadel", type: "Layer 1", color: "#8a5942", group: "Bronzes / Coppers" };
-            activeWallLayout["I12"] = { name: "Runelord Brass", brand: "Citadel", type: "Layer 2", color: "#a89a82", group: "Bronzes / Coppers" };
-            activeWallLayout["I13"] = { name: "Grey Knights Steel", brand: "Citadel", type: "Base", color: "#697c8a", group: "Silvers (Blue-Tinged)" };
-            activeWallLayout["I14"] = { name: "Ironbreaker", brand: "Citadel", type: "Layer 1", color: "#adb2b5", group: "Silvers (Blue-Tinged)" };
-            activeWallLayout["I15"] = { name: "Stormhost Silver", brand: "Citadel", type: "Layer 2", color: "#dbe3e7", group: "Silvers (Blue-Tinged)" };
-            activeWallLayout["I16"] = { name: "Cryptek Armourshade", brand: "Citadel", type: "Shade/Wash", color: "#402516", group: "Utility (Gloss/Metal Wash)" };
-
-            // COLUMN J
-            activeWallLayout["J1"] = { name: "Runelord Brass", brand: "Citadel", type: "Base", color: "#a89a82", group: "Brass Tones" };
-            activeWallLayout["J2"] = { name: "Brazen Brass", brand: "Citadel", type: "Layer 1", color: "#9a7c3c", group: "Brass Tones" };
-            activeWallLayout["J3"] = { name: "Stormhost Silver", brand: "Citadel", type: "Layer 2", color: "#dbe3e7", group: "Brass Tones" };
-            activeWallLayout["J4"] = { name: "Screaming Bell", brand: "Citadel", type: "Base", color: "#9c523c", group: "Coppers (Bright)" };
-            activeWallLayout["J5"] = { name: "Hashut Copper", brand: "Citadel", type: "Layer 1", color: "#bd7354", group: "Coppers (Bright)" };
-            activeWallLayout["J6"] = { name: "Stormhost Silver", brand: "Citadel", type: "Layer 2", color: "#dbe3e7", group: "Coppers (Bright)" };
-            activeWallLayout["J7"] = { name: "Death Guard Green", brand: "Citadel", type: "Base", color: "#737c54", group: "Nurgle Armor" };
-            activeWallLayout["J8"] = { name: "Elysian Green", brand: "Citadel", type: "Layer 1", color: "#829c42", group: "Nurgle Armor" };
-            activeWallLayout["J9"] = { name: "Ogryn Camo", brand: "Citadel", type: "Layer 2", color: "#838a53", group: "Nurgle Armor" };
-            activeWallLayout["J10"] = { name: "Corax White", brand: "Citadel", type: "Base", color: "#e3e3e7", group: "Chalky Whites" };
-            activeWallLayout["J11"] = { name: "White Scar", brand: "Citadel", type: "Layer 1", color: "#ffffff", group: "Chalky Whites" };
-            activeWallLayout["J12"] = { name: "Praxeti White", brand: "Citadel", type: "Layer 2", color: "#ffffff", group: "Chalky Whites" };
-            activeWallLayout["J13"] = { name: "Lucius Pattern", brand: "Citadel", type: "Base", color: "#d6c5b3", group: "Alternative Flesh" };
-            activeWallLayout["J14"] = { name: "Flayed One Flesh", brand: "Citadel", type: "Layer 1", color: "#cdbaaf", group: "Alternative Flesh" };
-            activeWallLayout["J15"] = { name: "Pallid Wych Flesh", brand: "Citadel", type: "Layer 2", color: "#cdccc4", group: "Alternative Flesh" };
-            activeWallLayout["J16"] = { name: "Mortarion Grime", brand: "Citadel", type: "Shade/Wash", color: "#3e402e", group: "Utility (Nurgle Shade)" };
-
-            // COLUMN K
-            activeWallLayout["K1"] = { name: "Thondia Brown", brand: "Citadel", type: "Base", color: "#423225", group: "Ghurish Browns" };
-            activeWallLayout["K2"] = { name: "Hobgrot Hide", brand: "Citadel", type: "Layer 1", color: "#ab9659", group: "Ghurish Browns" };
-            activeWallLayout["K3"] = { name: "Screaming Skull", brand: "Citadel", type: "Layer 2", color: "#dbd3b2", group: "Ghurish Browns" };
-            activeWallLayout["K4"] = { name: "Hobgrot Hide", brand: "Citadel", type: "Base", color: "#ab9659", group: "Yellow-Brown Muds" };
-            activeWallLayout["K5"] = { name: "Phalanx Yellow", brand: "Citadel", type: "Layer 1", color: "#ebd63d", group: "Yellow-Brown Muds" };
-            activeWallLayout["K6"] = { name: "Dorn Yellow", brand: "Citadel", type: "Layer 2", color: "#fff987", group: "Yellow-Brown Muds" };
-            activeWallLayout["K7"] = { name: "Gore-Grunta Fur (Dry alternative)", brand: "Citadel", type: "Base", color: "#693c16", group: "Warm Fur" };
-            activeWallLayout["K8"] = { name: "Skrag Brown", brand: "Citadel", type: "Layer 1", color: "#8a4513", group: "Warm Fur" };
-            activeWallLayout["K9"] = { name: "Deathclaw Brown", brand: "Citadel", type: "Layer 2", color: "#b0693a", group: "Warm Fur" };
-            activeWallLayout["K10"] = { name: "Iron Warriors", brand: "Citadel", type: "Base", color: "#4a4e52", group: "Dark Heavy Irons" };
-            activeWallLayout["K11"] = { name: "Leadbelcher", brand: "Citadel", type: "Layer 1", color: "#87888c", group: "Dark Heavy Irons" };
-            activeWallLayout["K12"] = { name: "Ironbreaker", brand: "Citadel", type: "Layer 2", color: "#adb2b5", group: "Dark Heavy Irons" };
-            activeWallLayout["K13"] = { name: "Perseus Purple", brand: "Citadel", type: "Base", color: "#543c69", group: "Alternative Purples" };
-            activeWallLayout["K14"] = { name: "Daemonette Hide", brand: "Citadel", type: "Layer 1", color: "#605465", group: "Alternative Purples" };
-            activeWallLayout["K15"] = { name: "Slaanesh Grey", brand: "Citadel", type: "Layer 2", color: "#827d8e", group: "Alternative Purples" };
-            activeWallLayout["K16"] = { name: "Athonian Camoshade", brand: "Citadel", type: "Shade/Wash", color: "#2e3b25", group: "Utility (Camo Wash)" };
-
-            // COLUMN L
-            activeWallLayout["L1"] = { name: "Sons of Horus Green", brand: "Citadel", type: "Base", color: "#00655e", group: "Horus Sea Greens" };
-            activeWallLayout["L2"] = { name: "Sybarite Green", brand: "Citadel", type: "Layer 1", color: "#178973", group: "Horus Sea Greens" };
-            activeWallLayout["L3"] = { name: "Gauss Blaster Green", brand: "Citadel", type: "Layer 2", color: "#a4ded6", group: "Horus Sea Greens" };
-            activeWallLayout["L4"] = { name: "Coelia Greenshade (Base substitute)", brand: "Citadel", type: "Base", color: "#004a4e", group: "Deep Aquatic" };
-            activeWallLayout["L5"] = { name: "Sotek Green", brand: "Citadel", type: "Layer 1", color: "#0b697f", group: "Deep Aquatic" };
-            activeWallLayout["L6"] = { name: "Temple Guard Blue", brand: "Citadel", type: "Layer 2", color: "#3fa4b6", group: "Deep Aquatic" };
-            activeWallLayout["L7"] = { name: "Phoenician Purple", brand: "Citadel", type: "Base", color: "#421652", group: "Royal Purples" };
-            activeWallLayout["L8"] = { name: "Xereus Purple", brand: "Citadel", type: "Layer 1", color: "#47125a", group: "Royal Purples" };
-            activeWallLayout["L9"] = { name: "Genestealer Purple", brand: "Citadel", type: "Layer 2", color: "#764094", group: "Royal Purples" };
-            activeWallLayout["L10"] = { name: "Word Bearers Red", brand: "Citadel", type: "Base", color: "#622521", group: "Muted Terracottas" };
-            activeWallLayout["L11"] = { name: "Tuskgor Fur", brand: "Citadel", type: "Layer 1", color: "#9c544a", group: "Muted Terracottas" };
-            activeWallLayout["L12"] = { name: "Kislev Flesh", brand: "Citadel", type: "Layer 2", color: "#d1a581", group: "Muted Terracottas" };
-            activeWallLayout["L13"] = { name: "Doombull Brown", brand: "Citadel", type: "Base", color: "#592121", group: "Red-Browns" };
-            activeWallLayout["L14"] = { name: "Tuskgor Fur", brand: "Citadel", type: "Layer 1", color: "#9c544a", group: "Red-Browns" };
-            activeWallLayout["L15"] = { name: "Astorath Red", brand: "Citadel", type: "Layer 2", color: "#e3656c", group: "Red-Browns" };
-            activeWallLayout["L16"] = { name: "Fuegan Orange", brand: "Citadel", type: "Shade/Wash", color: "#bd4a1c", group: "Utility (Orange Wash)" };
-
-            // COLUMN M
-            activeWallLayout["M1"] = { name: "Baal Red (Dry substitute)", brand: "Citadel", type: "Base", color: "#da1c25", group: "Contrast-Style Reds" };
-            activeWallLayout["M2"] = { name: "Evil Sunz Scarlet", brand: "Citadel", type: "Layer 1", color: "#c01413", group: "Contrast-Style Reds" };
-            activeWallLayout["M3"] = { name: "Fire Dragon Bright", brand: "Citadel", type: "Layer 2", color: "#f58232", group: "Contrast-Style Reds" };
-            activeWallLayout["M4"] = { name: "Doomfire Magenta", brand: "Citadel", type: "Base", color: "#e31c69", group: "Vibrant Magentas" };
-            activeWallLayout["M5"] = { name: "Pink Horror", brand: "Citadel", type: "Layer 1", color: "#9c3667", group: "Vibrant Magentas" };
-            activeWallLayout["M6"] = { name: "Changeling Pink", brand: "Citadel", type: "Layer 2", color: "#da96b5", group: "Vibrant Magentas" };
-            activeWallLayout["M7"] = { name: "Sigismund Yellow", brand: "Citadel", type: "Base", color: "#ffaa00", group: "Vibrant Yellows" };
-            activeWallLayout["M8"] = { name: "Yriel Yellow", brand: "Citadel", type: "Layer 1", color: "#ffd900", group: "Vibrant Yellows" };
-            activeWallLayout["M9"] = { name: "Dorn Yellow", brand: "Citadel", type: "Layer 2", color: "#fff987", group: "Vibrant Yellows" };
-            activeWallLayout["M10"] = { name: "Asurmen Blue", brand: "Citadel", type: "Base", color: "#003b87", group: "Deep Blue Contrast-Alike" };
-            activeWallLayout["M11"] = { name: "Calgar Blue", brand: "Citadel", type: "Layer 1", color: "#3d7dbd", group: "Deep Blue Contrast-Alike" };
-            activeWallLayout["M12"] = { name: "Fenrisian Grey", brand: "Citadel", type: "Layer 2", color: "#7292a6", group: "Deep Blue Contrast-Alike" };
-            activeWallLayout["M13"] = { name: "Karandras Green", brand: "Citadel", type: "Base", color: "#008a3c", group: "Striking Greens" };
-            activeWallLayout["M14"] = { name: "Warpstone Glow", brand: "Citadel", type: "Layer 1", color: "#137438", group: "Striking Greens" };
-            activeWallLayout["M15"] = { name: "Moot Green", brand: "Citadel", type: "Layer 2", color: "#3da224", group: "Striking Greens" };
-            activeWallLayout["M16"] = { name: "Coelia Greenshade", brand: "Citadel", type: "Shade/Wash", color: "#004a4e", group: "Utility (Turquoise Wash)" };
-
-            // COLUMN N
-            activeWallLayout["N1"] = { name: "Kroxigor Blue", brand: "Citadel", type: "Base", color: "#009cbd", group: "Light Sea Blues" };
-            activeWallLayout["N2"] = { name: "Teclis Blue", brand: "Citadel", type: "Layer 1", color: "#3282c4", group: "Light Sea Blues" };
-            activeWallLayout["N3"] = { name: "Lothern Blue", brand: "Citadel", type: "Layer 2", color: "#54aedd", group: "Light Sea Blues" };
-            activeWallLayout["N4"] = { name: "Imperial Fists Yellow", brand: "Citadel", type: "Base", color: "#ffcc00", group: "Imperial Yellows" };
-            activeWallLayout["N5"] = { name: "Flash Gitz Yellow", brand: "Citadel", type: "Layer 1", color: "#fff200", group: "Imperial Yellows" };
-            activeWallLayout["N6"] = { name: "Dorn Yellow", brand: "Citadel", type: "Layer 2", color: "#fff987", group: "Imperial Yellows" };
-            activeWallLayout["N7"] = { name: "Badrukk Flash", brand: "Citadel", type: "Base", color: "#e3b300", group: "Ork Flash Yellows" };
-            activeWallLayout["N8"] = { name: "Flash Gitz Yellow", brand: "Citadel", type: "Layer 1", color: "#fff200", group: "Ork Flash Yellows" };
-            activeWallLayout["N9"] = { name: "Hexos Palesun", brand: "Citadel", type: "Layer 2", color: "#fff287", group: "Ork Flash Yellows" };
-            activeWallLayout["N10"] = { name: "Striking Scorpion", brand: "Citadel", type: "Base", color: "#3dc300", group: "Sci-Fi Greens" };
-            activeWallLayout["N11"] = { name: "Moot Green", brand: "Citadel", type: "Layer 1", color: "#3da224", group: "Sci-Fi Greens" };
-            activeWallLayout["N12"] = { name: "Flash Gitz Yellow", brand: "Citadel", type: "Layer 2", color: "#fff200", group: "Sci-Fi Greens" };
-            activeWallLayout["N13"] = { name: "Magmadroth Flame", brand: "Citadel", type: "Base", color: "#f14a1c", group: "Fiery Oranges" };
-            activeWallLayout["N14"] = { name: "Troll Slayer Orange", brand: "Citadel", type: "Layer 1", color: "#f16522", group: "Fiery Oranges" };
-            activeWallLayout["N15"] = { name: "Fire Dragon Bright", brand: "Citadel", type: "Layer 2", color: "#f58232", group: "Fiery Oranges" };
-            activeWallLayout["N16"] = { name: "Tesseract Glow", brand: "Citadel", type: "Shade/Wash", color: "#1fff00", group: "Utility (Fluorescent Tech)" };
-
-            // COLUMN O
-            activeWallLayout["O1"] = { name: "Blood Angels Red", brand: "Citadel", type: "Contrast Line", color: "#b31212", group: "Contrast Expansion 1" };
-            activeWallLayout["O2"] = { name: "Flesh Tearers Red", brand: "Citadel", type: "Contrast Line", color: "#690a0a", group: "Contrast Expansion 1" };
-            activeWallLayout["O3"] = { name: "Volupus Pink", brand: "Citadel", type: "Contrast Line", color: "#7c1645", group: "Contrast Expansion 1" };
-            activeWallLayout["O4"] = { name: "Shyish Purple", brand: "Citadel", type: "Contrast Line", color: "#251233", group: "Contrast Expansion 1" };
-            activeWallLayout["O5"] = { name: "Magos Purple", brand: "Citadel", type: "Contrast Line", color: "#9c658d", group: "Contrast Expansion 1" };
-            activeWallLayout["O6"] = { name: "Leviadon Blue", brand: "Citadel", type: "Contrast Line", color: "#00163b", group: "Contrast Expansion 1" };
-            activeWallLayout["O7"] = { name: "Talassar Blue", brand: "Citadel", type: "Contrast Line", color: "#007cbd", group: "Contrast Expansion 1" };
-            activeWallLayout["O8"] = { name: "Akhelian Green", brand: "Citadel", type: "Contrast Line", color: "#00697c", group: "Contrast Expansion 1" };
-            activeWallLayout["O9"] = { name: "Terradon Turquoise", brand: "Citadel", type: "Contrast Line", color: "#005a59", group: "Contrast Expansion 1" };
-            activeWallLayout["O10"] = { name: "Dark Angels Green", brand: "Citadel", type: "Contrast Line", color: "#003b21", group: "Contrast Expansion 1" };
-            activeWallLayout["O11"] = { name: "Ork Flesh", brand: "Citadel", type: "Contrast Line", color: "#1c7c25", group: "Contrast Expansion 1" };
-            activeWallLayout["O12"] = { name: "Creed Camo", brand: "Citadel", type: "Contrast Line", color: "#2e5933", group: "Contrast Expansion 1" };
-            activeWallLayout["O13"] = { name: "Plaguebearer Flesh", brand: "Citadel", type: "Contrast Line", color: "#9ca84a", group: "Contrast Expansion 1" };
-            activeWallLayout["O14"] = { name: "Striking Scorpion Green", brand: "Citadel", type: "Contrast Line", color: "#3dc300", group: "Contrast Expansion 1" };
-            activeWallLayout["O15"] = { name: "Mantism Warriors Green", brand: "Citadel", type: "Contrast Line", color: "#69ab32", group: "Contrast Expansion 1" };
-            activeWallLayout["O16"] = { name: "Gryph-Hound Orange", brand: "Citadel", type: "Contrast Line", color: "#cf4512", group: "Contrast Expansion 1" };
-
-            // COLUMN P
-            activeWallLayout["P1"] = { name: "Iyanden Yellow", brand: "Citadel", type: "Contrast Line", color: "#ebd300", group: "Contrast Expansion 2" };
-            activeWallLayout["P2"] = { name: "Nazdreg Yellow", brand: "Citadel", type: "Contrast Line", color: "#ab8a12", group: "Contrast Expansion 2" };
-            activeWallLayout["P3"] = { name: "Gore-Grunta Fur", brand: "Citadel", type: "Contrast Line", color: "#693c16", group: "Contrast Expansion 2" };
-            activeWallLayout["P4"] = { name: "Snakebite Leather", brand: "Citadel", type: "Contrast Line", color: "#87541c", group: "Contrast Expansion 2" };
-            activeWallLayout["P5"] = { name: "Cygor Brown", brand: "Citadel", type: "Contrast Line", color: "#331c16", group: "Contrast Expansion 2" };
-            activeWallLayout["P6"] = { name: "Wyldwood", brand: "Citadel", type: "Contrast Line", color: "#422e25", group: "Contrast Expansion 2" };
-            activeWallLayout["P7"] = { name: "Fyreslayer Flesh", brand: "Citadel", type: "Contrast Line", color: "#b37359", group: "Contrast Expansion 2" };
-            activeWallLayout["P8"] = { name: "Guilliman Flesh", brand: "Citadel", type: "Contrast Line", color: "#c38569", group: "Contrast Expansion 2" };
-            activeWallLayout["P9"] = { name: "Darkoath Flesh", brand: "Citadel", type: "Contrast Line", color: "#d1a387", group: "Contrast Expansion 2" };
-            activeWallLayout["P10"] = { name: "Skeleton Horde", brand: "Citadel", type: "Contrast Line", color: "#bcac82", group: "Contrast Expansion 2" };
-            activeWallLayout["P11"] = { name: "Aggaros Dunes", brand: "Citadel", type: "Contrast Line", color: "#ab9659", group: "Contrast Expansion 2" };
-            activeWallLayout["P12"] = { name: "Basilicanum Grey", brand: "Citadel", type: "Contrast Line", color: "#54595c", group: "Contrast Expansion 2" };
-            activeWallLayout["P13"] = { name: "Space Wolves Grey", brand: "Citadel", type: "Contrast Line", color: "#697c8d", group: "Contrast Expansion 2" };
-            activeWallLayout["P14"] = { name: "Gryph-Charger Grey", brand: "Citadel", type: "Contrast Line", color: "#829eb3", group: "Contrast Expansion 2" };
-            activeWallLayout["P15"] = { name: "Apothecary White", brand: "Citadel", type: "Contrast Line", color: "#cbd3d6", group: "Contrast Expansion 2" };
-            activeWallLayout["P16"] = { name: "Black Templar", brand: "Citadel", type: "Contrast Line", color: "#161c21", group: "Contrast Expansion 2" };
-
-            // COLUMN Q
-            activeWallLayout["Q1"] = { name: "Blood for the Blood God", brand: "Citadel", type: "Technical Line", color: "#690002", group: "Gore Effects" };
-            activeWallLayout["Q2"] = { name: "Nihilakh Oxide", brand: "Citadel", type: "Technical Line", color: "#59b39c", group: "Verdigris Effects" };
-            activeWallLayout["Q3"] = { name: "Typhus Corrosion", brand: "Citadel", type: "Technical Line", color: "#38332e", group: "Rust Foundations" };
-            activeWallLayout["Q4"] = { name: "Ryza Rust (Dry-style)", brand: "Citadel", type: "Technical Line", color: "#cf591c", group: "Rust Textures" };
-            activeWallLayout["Q5"] = { name: "Nurgle's Rot", brand: "Citadel", type: "Technical Line", color: "#7c8d25", group: "Slime Effects" };
-            activeWallLayout["Q6"] = { name: "Waystone Green", brand: "Citadel", type: "Technical Line", color: "#00a342", group: "Gemstone FX" };
-            activeWallLayout["Q7"] = { name: "Spiritstone Red", brand: "Citadel", type: "Technical Line", color: "#da121a", group: "Gemstone FX" };
-            activeWallLayout["Q8"] = { name: "Soulstone Blue", brand: "Citadel", type: "Technical Line", color: "#0069cf", group: "Gemstone FX" };
-            activeWallLayout["Q9"] = { name: "Ardcoat", brand: "Citadel", type: "Technical Line", color: "#e3e3e7", group: "Gloss Varnish" };
-            activeWallLayout["Q10"] = { name: "Stormshield", brand: "Citadel", type: "Technical Line", color: "#cbd4c5", group: "Matt Varnish" };
-            activeWallLayout["Q11"] = { name: "Contrast Medium", brand: "Citadel", type: "Technical Line", color: "#ffffff", group: "Thinner Medium" };
-            activeWallLayout["Q12"] = { name: "Lahmian Medium", brand: "Citadel", type: "Technical Line", color: "#ffffff", group: "Thinner Medium" };
-            activeWallLayout["Q13"] = { name: "Liquid Talent (Custom)", brand: "Citadel", type: "Technical Line", color: "#423225", group: "Hobbyist Mix" };
-            activeWallLayout["Q14"] = { name: "Gloss Medium", brand: "Citadel", type: "Technical Line", color: "#ffffff", group: "Hobbyist Mix" };
-            activeWallLayout["Q15"] = { name: "Airbrush Thinner", brand: "Citadel", type: "Technical Line", color: "#ffffff", group: "Hobbyist Mix" };
-            activeWallLayout["Q16"] = { name: "Vallejo Flow Improver", brand: "Citadel", type: "Technical Line", color: "#ffffff", group: "Hobbyist Mix" };
-
-            // COLUMN R (Texture Base lines 1 to 10)
-            activeWallLayout["R1"] = { name: "Astrogranite", brand: "Citadel", type: "Texture Base", color: "#54595c", group: "Base Ground Textures" };
-            activeWallLayout["R2"] = { name: "Astrogranite Debris", brand: "Citadel", type: "Texture Base", color: "#474a4d", group: "Base Ground Textures" };
-            activeWallLayout["R3"] = { name: "Stirland Mud", brand: "Citadel", type: "Texture Base", color: "#332116", group: "Base Ground Textures" };
-            activeWallLayout["R4"] = { name: "Stirland Battlemire", brand: "Citadel", type: "Texture Base", color: "#251612", group: "Base Ground Textures" };
-            activeWallLayout["R5"] = { name: "Armageddon Dust", brand: "Citadel", type: "Texture Base", color: "#ab9659", group: "Base Ground Textures" };
-            activeWallLayout["R6"] = { name: "Armageddon Dunes", brand: "Citadel", type: "Texture Base", color: "#9c8547", group: "Base Ground Textures" };
-            activeWallLayout["R7"] = { name: "Agrellan Earth", brand: "Citadel", type: "Texture Base", color: "#bc9c73", group: "Crackle Textures" };
-            activeWallLayout["R8"] = { name: "Agrellan Badland", brand: "Citadel", type: "Texture Base", color: "#8a6942", group: "Crackle Textures" };
-            activeWallLayout["R9"] = { name: "Mordant Earth", brand: "Citadel", type: "Texture Base", color: "#111111", group: "Crackle Textures" };
-            activeWallLayout["R10"] = { name: "Valhallan Blizzard", brand: "Citadel", type: "Texture Base", color: "#ffffff", group: "Snow Textures" };
+        rackData.forEach(item => {
+            const rowLetter = item.slot.charAt(0);
+            const container = document.getElementById(`row-${rowLetter}`);
             
-            // Note: R11-R16, S1-S16, T1-T16 remain completely open cells for user assignment.
-        }
+            const slotEl = document.createElement('div');
+            slotEl.className = `slot ${!item.name ? 'empty' : ''} ${selectedSlotId === item.slot ? 'active-selection' : ''}`;
+            slotEl.onclick = () => selectSlot(item.slot);
 
-        function renderHexGrid() {
-            const canvas = document.getElementById('canvas-grid');
-            canvas.innerHTML = '';
+            const slotIdEl = document.createElement('div');
+            slotIdEl.className = 'slot-id';
+            slotIdEl.innerText = item.slot;
+            slotEl.appendChild(slotIdEl);
 
-            for (let r = 1; r <= rowsCount; r++) {
-                const rowObj = document.createElement('div');
-                rowObj.className = 'hex-row';
+            if (item.name) {
+                const nameEl = document.createElement('div');
+                nameEl.className = 'paint-name';
+                nameEl.innerText = item.name;
+                
+                const typeEl = document.createElement('div');
+                typeEl.className = 'paint-type';
+                typeEl.innerText = item.type;
 
-                cols.forEach(colName => {
-                    const coordStr = `${colName}${r}`;
-                    const cell = document.createElement('div');
-                    cell.className = 'hex-cell';
-                    cell.id = `cell-${coordStr}`;
+                // Action buttons to showcase complete layout control freedom
+                const actionsEl = document.createElement('div');
+                actionsEl.className = 'actions';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn';
+                editBtn.innerText = 'Swap';
+                editBtn.onclick = (e) => { e.stopPropagation(); changePaint(item.slot); };
 
-                    if (r === 16) {
-                        cell.style.borderBottom = "2px dashed #444452";
-                    }
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn btn-delete';
+                delBtn.innerText = 'X';
+                delBtn.onclick = (e) => { e.stopPropagation(); clearSlot(item.slot); };
 
-                    const coordLabel = document.createElement('span');
-                    coordLabel.className = 'hex-coord';
-                    coordLabel.innerText = coordStr;
-                    cell.appendChild(coordLabel);
+                actionsEl.appendChild(editBtn);
+                actionsEl.appendChild(delBtn);
 
-                    const titleLabel = document.createElement('span');
-                    titleLabel.className = 'hex-title';
-
-                    if (activeWallLayout[coordStr]) {
-                        const activeItem = activeWallLayout[coordStr];
-                        titleLabel.innerText = activeItem.name;
-                        cell.style.backgroundColor = activeItem.color;
-
-                        const bDot = document.createElement('div');
-                        bDot.className = 'brand-dot dot-citadel';
-                        cell.appendChild(bDot);
-
-                        if(activeItem.color === '#ffffff' || activeItem.color === '#fff200' || activeItem.color === '#ffd900' || activeItem.color === '#fff987') {
-                            cell.style.color = '#000';
-                            coordLabel.style.color = 'rgba(0,0,0,0.5)';
-                        }
-                        cell.addEventListener('click', (e) => {
-                            if (isDraggingEvent) return;
-                            launchViewPanel(coordStr, activeItem);
-                        });
-                    } else {
-                        titleLabel.innerText = '';
-                        cell.addEventListener('click', (e) => {
-                            if (isDraggingEvent) return;
-                            launchEditPanel(coordStr);
-                        });
-                    }
-
-                    cell.appendChild(titleLabel);
-                    rowObj.appendChild(cell);
-                });
-                canvas.appendChild(rowObj);
+                slotEl.appendChild(nameEl);
+                slotEl.appendChild(typeEl);
+                slotEl.appendChild(actionsEl);
+            } else {
+                const addEl = document.createElement('div');
+                addEl.className = 'paint-name';
+                addEl.style.color = '#55556d';
+                addEl.innerText = '+ Add';
+                slotEl.appendChild(addEl);
+                slotEl.onclick = () => changePaint(item.slot);
             }
-            evaluateStatistics();
+
+            container.appendChild(slotEl);
+        });
+    }
+
+    function selectSlot(slotId) {
+        selectedSlotId = slotId;
+        renderRack();
+
+        const currentPaint = rackData.find(p => p.slot === slotId);
+        const viewerPanel = document.getElementById('viewer-panel');
+        const activeInfo = document.getElementById('active-info');
+        const infoTitle = document.getElementById('info-title');
+        const triadContainer = document.getElementById('triad-container');
+
+        if (!currentPaint || !currentPaint.name) {
+            viewerPanel.firstElementChild.style.display = 'block';
+            activeInfo.style.display = 'none';
+            return;
         }
 
-        // --- PAN AND ZOOM LOGIC ENGINE ---
-        const viewport = document.getElementById('viewport');
-        const canvas = document.getElementById('canvas-grid');
+        viewerPanel.firstElementChild.style.display = 'none';
+        activeInfo.style.display = 'block';
+        infoTitle.innerText = `${currentPaint.family} Set Sequence`;
 
-        let scale = 0.65;
-        let panX = 10;
-        let panY = 10;
-        let isDragging = false;
-        let isDraggingEvent = false;
-        let startX, startY;
-        let initialPinchDist = null;
-        let initialScale = 1;
+        // Fetch all items belonging to this specific family set to create the dynamic triad
+        const familyTriad = rackData.filter(p => p.family === currentPaint.family);
+        
+        // Ensure standard Base -> Layer 1 -> Layer 2 ordering rules apply
+        const orderMap = { "Base": 1, "Layer 1": 2, "Layer 2": 3 };
+        familyTriad.sort((a, b) => orderMap[a.type] - orderMap[b.type]);
 
-        function updateTransform() {
-            scale = Math.max(0.25, Math.min(scale, 2.5));
-            canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-        }
-
-        viewport.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                isDragging = true;
-                isDraggingEvent = false;
-                startX = e.touches[0].clientX - panX;
-                startY = e.touches[0].clientY - panY;
-            } else if (e.touches.length === 2) {
-                isDragging = false;
-                initialPinchDist = Math.hypot(
-                    e.touches[0].clientX - e.touches[1].clientX,
-                    e.touches[0].clientY - e.touches[1].clientY
-                );
-                initialScale = scale;
-            }
-        }, { passive: true });
-
-        viewport.addEventListener('touchmove', (e) => {
-            if (isDragging && e.touches.length === 1) {
-                isDraggingEvent = true;
-                panX = e.touches[0].clientX - startX;
-                panY = e.touches[0].clientY - startY;
-                updateTransform();
-            } else if (e.touches.length === 2 && initialPinchDist) {
-                const currentDist = Math.hypot(
-                    e.touches[0].clientX - e.touches[1].clientX,
-                    e.touches[0].clientY - e.touches[1].clientY
-                );
-                scale = initialScale * (currentDist / initialPinchDist);
-                updateTransform();
-            }
-        }, { passive: true });
-
-        viewport.addEventListener('touchend', (e) => {
-            isDragging = false;
-            initialPinchDist = null;
-            setTimeout(() => { isDraggingEvent = false; }, 50);
-        });
-
-        viewport.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            isDraggingEvent = false;
-            startX = e.clientX - panX;
-            startY = e.clientY - panY;
-        });
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            isDraggingEvent = true;
-            panX = e.clientX - startX;
-            panY = e.clientY - startY;
-            updateTransform();
-        });
-        window.addEventListener('mouseup', () => {
-            isDragging = false;
-            setTimeout(() => { isDraggingEvent = false; }, 50);
-        });
-
-        function launchViewPanel(coord, paint) {
-            document.getElementById('edit-panel').style.display = 'none';
-            const panel = document.getElementById('view-panel');
-            panel.style.display = 'block';
-
-            document.getElementById('view-name').innerText = paint.name + ` (${coord})`;
-            document.getElementById('view-meta').innerText = `${paint.brand} · ${paint.type}`;
-            document.getElementById('view-swatch').style.backgroundColor = paint.color;
-
-            const triadBox = document.getElementById('view-triad');
-            triadBox.innerHTML = `<span class="triad-step triad-active">${paint.group || 'General Set Collection'}</span>`;
-        }
-
-        function launchEditPanel(coord) {
-            document.getElementById('view-panel').style.display = 'none';
-            const panel = document.getElementById('edit-panel');
-            panel.style.display = 'block';
+        triadContainer.innerHTML = '';
+        familyTriad.forEach((step, idx) => {
+            const stepEl = document.createElement('div');
+            stepEl.className = 'triad-step';
+            stepEl.innerText = `${step.type}: ${step.name}`;
             
-            selectedCoord = coord;
-            document.getElementById('edit-coords').innerText = `Assign Slot: ${coord}`;
-            document.getElementById('catalogSearch').value = '';
-            selectedPaintFromCatalog = null;
-            updateCatalogDropdown();
+            // Bold rule if it matches the user's currently selected slot
+            if (step.slot === slotId) {
+                stepEl.classList.add('selected');
+                stepEl.style.fontWeight = 'bold';
+            }
+
+            triadContainer.appendChild(stepEl);
+
+            if (idx < familyTriad.length - 1) {
+                const arrow = document.createElement('div');
+                arrow.className = 'arrow';
+                arrow.innerHTML = '&#10142;';
+                triadContainer.appendChild(arrow);
+            }
+        });
+    }
+
+    // Completely variable control functions (no hard-locking anchors)
+    function clearSlot(slotId) {
+        const item = rackData.find(p => p.slot === slotId);
+        if (item) {
+            item.name = null;
+            item.type = "Open Slot";
+            item.family = null;
+            if (selectedSlotId === slotId) selectedSlotId = null;
+            renderRack();
+            selectSlot(null);
         }
+    }
 
-        function closePanels() {
-            document.getElementById('view-panel').style.display = 'none';
-            document.getElementById('edit-panel').style.display = 'none';
+    function changePaint(slotId) {
+        const newName = prompt("Enter Paint Name:");
+        if (!newName) return;
+        const newType = prompt("Enter Type (Base, Layer 1, Layer 2):", "Layer 1");
+        const newFamily = prompt("Enter Color Family Set Name:", "Custom Mix");
+
+        const item = rackData.find(p => p.slot === slotId);
+        if (item) {
+            item.name = newName;
+            item.type = newType;
+            item.family = newFamily;
+            renderRack();
+            selectSlot(slotId);
         }
+    }
 
-        function filterTab(brand, element) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn');
-            element.className = 'tab-btn tab-active';
-            activeTabBrand = brand;
-            updateCatalogDropdown();
-        }
-
-        function updateCatalogDropdown() {
-            const searchVal = document.getElementById('catalogSearch').value.toLowerCase();
-            const box = document.getElementById('dropdown-box');
-            box.innerHTML = '';
-
-            const filtered = paintCatalog.filter(p => {
-                const matchesBrand = (activeTabBrand === 'All' || p.brand === activeTabBrand);
-                const matchesSearch = p.name.toLowerCase().includes(searchVal) || p.group.toLowerCase().includes(searchVal);
-                return matchesBrand && matchesSearch;
-            });
-
-            filtered.forEach(p => {
-                const row = document.createElement('div');
-                row.className = 'dropdown-item';
-                row.innerHTML = `<span>${p.name}</span><span style="color:var(--text-dim); font-size:0.7rem;">${p.group}</span>`;
-                row.onclick = () => {
-                    document.getElementById('catalogSearch').value = p.name;
-                    selectedPaintFromCatalog = p;
-                };
-                box.appendChild(row);
-            });
-        }
-
-        function commitAssignment() {
-            if (!selectedPaintFromCatalog || !selectedCoord) return;
-            activeWallLayout[selectedCoord] = { ...selectedPaintFromCatalog };
-            renderHexGrid();
-            document.getElementById('edit-panel').style.display = 'none';
-        }
-
-        function clearAssignment() {
-            if (!selectedCoord) return;
-            delete activeWallLayout[selectedCoord];
-            renderHexGrid();
-            document.getElementById('edit-panel').style.display = 'none';
-        }
-
-        function runGlobalSearch() {
-            const matchStr = document.getElementById('mainSearch').value.toLowerCase();
-            cols.forEach(col => {
-                for(let r = 1; r <= rowsCount; r++) {
-                    const coord = `${col}${r}`;
-                    const targetCell = document.getElementById(`cell-${coord}`);
-                    if (!targetCell) continue;
-                    const activePaint = activeWallLayout[coord];
-
-                    if (matchStr === '') {
-                        targetCell.classList.remove('hex-dimmed');
-                        continue;
-                    }
-                    if (activePaint) {
-                        if (activePaint.name.toLowerCase().includes(matchStr) || 
-                            activePaint.group.toLowerCase().includes(matchStr) ||
-                            coord.toLowerCase().includes(matchStr)) {
-                            targetCell.classList.remove('hex-dimmed');
-                        } else {
-                            targetCell.classList.add('hex-dimmed');
-                        }
-                    } else {
-                        if (coord.toLowerCase().includes(matchStr)) {
-                            targetCell.classList.remove('hex-dimmed');
-                        } else {
-                            targetCell.classList.add('hex-dimmed');
-                        }
-                    }
-                }
-            });
-        }
-
-        function evaluateStatistics() {
-            const calculatedTotal = Object.keys(activeWallLayout).length;
-            const openCapacity = (20 * 16) - calculatedTotal;
-            document.getElementById('stat-total').innerText = `Paints Placed: ${calculatedTotal}`;
-            document.getElementById('stat-empty').innerText = `Empty Slots: ${openCapacity}`;
-        }
-
-        window.onload = () => {
-            buildStructuralMatrix();
-            renderHexGrid();
-            updateTransform();
-        };
-    </script>
+    // Initial load up configuration
+    renderRack();
+</script>
 </body>
 </html>
